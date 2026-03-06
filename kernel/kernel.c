@@ -14,11 +14,13 @@ void main() {
     printf("Memory Layout: 32-bit Protected Mode Active.\n\n\n");
     printf("Kernel Status: Stable.\n\n");
     printf("============== %s  ==========\n\n","1234");
-    printf("=============  %d  ==============\n\n", 1234);
+    printf("=============  %d  ==============\n\n", -1234);
     printf("=============  %c  ==============\n\n", '1');
     char* c = "12345";
     printf("================= %p ==============\n\n",c);
-
+    for (int i = 1; i<30;i++){
+        printf("----------%d--------------\n",i);
+    }
 
     
     while(true); // עצירה אינסופית

@@ -67,6 +67,11 @@ void printf (char* message, ...) {
 
 
 void print_char(char c) {
+    // בדיקה: אם חרגנו מגבולות המסך (80*25*2 בייטים), יש לבצע גלילה
+    if (cursor_pos >= 80 * 25 * 2) {
+        scroll_screen();
+    }
+
     if (c == '\n') {
         cursor_pos = ((cursor_pos / 160) + 1) * 160;
     } else {
@@ -120,4 +125,23 @@ void print_hex(unsigned int pointer){
         print_char(buffer[i]);
     }
     set_color(old_color);
+}
+
+
+void scroll_screen() {
+    // הזזת כל השורות למעלה
+    for (int i = 1; i < 25; i++) {
+        for (int j = 0; j < 80 * 2; j++) {
+            vidmem[(i - 1) * 80 * 2 + j] = vidmem[i * 80 * 2 + j]; 
+        }
+    }
+
+    // ניקוי השורה האחרונה
+    for (int k = 0; k < 80 * 2; k += 2) { 
+        vidmem[24 * 80 * 2 + k] = ' ';
+        vidmem[24 * 80 * 2 + k + 1] = (char)cur_color;
+    }
+
+    // עדכון הסמן לסוף
+    cursor_pos = 24 * 80 * 2;
 }
