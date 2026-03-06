@@ -3,16 +3,17 @@ ASM = nasm
 CC = gcc
 LD = ld
 
-# דגלים - שים לב ל-I שמפנה לתיקיית הדרייברים
+# דגלים - מפנה לתיקיית drivers
 CFLAGS = -m32 -ffreestanding -fno-pic -fno-stack-protector -c -I drivers/
 LDFLAGS = -m elf_i386 -Ttext 0x1000 --oformat binary
 
-# קבצי יעד ותיקיות
+# קבצי יעד
 BIN_DIR = bin
 IMAGE = $(BIN_DIR)/os-image.bin
-OBJ = $(BIN_DIR)/kernel.o $(BIN_DIR)/help_func.o
+# עדכון: kernel.o ו-const.o
+OBJ = $(BIN_DIR)/kernel.o $(BIN_DIR)/const.o
 
-# יצירת תיקיית bin אם היא לא קיימת
+# יצירת תיקיית bin אם היא חסרה
 $(shell mkdir -p $(BIN_DIR))
 
 all: $(IMAGE)
@@ -21,7 +22,7 @@ $(IMAGE): $(BIN_DIR)/boot.bin $(BIN_DIR)/kernel.bin
 	cat $^ > $@
 	truncate -s 10M $@
 
-# בוטלודר
+# בוטלודר 
 $(BIN_DIR)/boot.bin: boot/boot.asm
 	$(ASM) -f bin $< -o $@
 
@@ -29,10 +30,11 @@ $(BIN_DIR)/boot.bin: boot/boot.asm
 $(BIN_DIR)/kernel.bin: $(OBJ)
 	$(LD) $(LDFLAGS) -o $@ $^
 
-# קימפול הקרנל
+# קימפול הקרנל 
 $(BIN_DIR)/kernel.o: kernel/kernel.c
 	$(CC) $(CFLAGS) $< -o $@
 
+# קימפול הדרייבר
 $(BIN_DIR)/const.o: drivers/const.c
 	$(CC) $(CFLAGS) $< -o $@
 

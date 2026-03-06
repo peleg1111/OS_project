@@ -1,4 +1,4 @@
-#include "help_func.h"
+#include "const.h"
 
 static int cursor_pos = 0; // משתנה שזוכר איפה עצרנו
 volatile char* vidmem = (char*) VIDEO_ADDRESS;
@@ -7,7 +7,23 @@ static int cur_color = WHITE_ON_BLACK;
 void set_color(int new_color){
     cur_color = new_color;
 }
+void scroll_screen() {
+    // הזזת כל השורות למעלה
+    for (int i = 1; i < 25; i++) {
+        for (int j = 0; j < 80 * 2; j++) {
+            vidmem[(i - 1) * 80 * 2 + j] = vidmem[i * 80 * 2 + j]; 
+        }
+    }
 
+    // ניקוי השורה האחרונה
+    for (int k = 0; k < 80 * 2; k += 2) { 
+        vidmem[24 * 80 * 2 + k] = ' ';
+        vidmem[24 * 80 * 2 + k + 1] = (char)cur_color;
+    }
+
+    // עדכון הסמן לסוף
+    cursor_pos = 24 * 80 * 2;
+}
 
 // פונקציה לניקוי המסך
 void clear_screen() {
@@ -128,20 +144,3 @@ void print_hex(unsigned int pointer){
 }
 
 
-void scroll_screen() {
-    // הזזת כל השורות למעלה
-    for (int i = 1; i < 25; i++) {
-        for (int j = 0; j < 80 * 2; j++) {
-            vidmem[(i - 1) * 80 * 2 + j] = vidmem[i * 80 * 2 + j]; 
-        }
-    }
-
-    // ניקוי השורה האחרונה
-    for (int k = 0; k < 80 * 2; k += 2) { 
-        vidmem[24 * 80 * 2 + k] = ' ';
-        vidmem[24 * 80 * 2 + k + 1] = (char)cur_color;
-    }
-
-    // עדכון הסמן לסוף
-    cursor_pos = 24 * 80 * 2;
-}
