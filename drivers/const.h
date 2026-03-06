@@ -22,6 +22,10 @@ typedef __builtin_va_list va_list;
 #define true 1
 #define false 0
 #define null 0x00
+#define MAX_ROWS 100
+#define SCREEN_ROWS 25
+#define SCREEN_COLS 80
+
 
 // הגדרות צבעים (VGA Color)
 #define VIDEO_ADDRESS 0xB8000 // VGA pointer (לשם כותבים את ההדפסה)
@@ -29,4 +33,6 @@ typedef __builtin_va_list va_list;
 #define WHITE_ON_BLACK 0x0F
 #define GREEN_ON_BLACK 0x0A
 #define YELLOW_ON_BLACK 0x0E
+
+
 

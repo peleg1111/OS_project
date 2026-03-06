@@ -1,36 +1,43 @@
 #include "const.h"
 
 static int cursor_pos = 0; // משתנה שזוכר איפה עצרנו
-volatile char* vidmem = (char*) VIDEO_ADDRESS;
+    volatile unsigned short* video = (unsigned short*) VIDEO_ADDRESS;
 static int cur_color = WHITE_ON_BLACK;
+
+// חוצץ ששומר את כל הטקסט (תו + צבע)
+unsigned short terminal_buffer[MAX_ROWS * SCREEN_COLS];
+int current_view_row = 0; // השורה שאותה אנחנו רואים כרגע בראש המסך
+
+void update_screen() {
+    // הגדרה כ-short מאפשרת לנו להעתיק תו + צבע בפקודה אחת
+    for (int i = 0; i < SCREEN_ROWS; i++) {
+        for (int j = 0; j < SCREEN_COLS; j++) {
+            int buffer_index = (current_view_row + i) * SCREEN_COLS + j;
+            video[i * SCREEN_COLS + j] = terminal_buffer[buffer_index];
+        }
+    }
+}
+
+void print_char_to_buffer(char c, int row, int col) {
+    //  מקדם את הצבע לפני התו וה-| מחבר בניהם לביט אחד 
+    terminal_buffer[row * SCREEN_COLS + col] = (c | (cur_color << 8));
+}
+
 
 void set_color(int new_color){
     cur_color = new_color;
 }
-void scroll_screen() {
-    // הזזת כל השורות למעלה
-    for (int i = 1; i < 25; i++) {
-        for (int j = 0; j < 80 * 2; j++) {
-            vidmem[(i - 1) * 80 * 2 + j] = vidmem[i * 80 * 2 + j]; 
-        }
-    }
 
-    // ניקוי השורה האחרונה
-    for (int k = 0; k < 80 * 2; k += 2) { 
-        vidmem[24 * 80 * 2 + k] = ' ';
-        vidmem[24 * 80 * 2 + k + 1] = (char)cur_color;
-    }
-
-    // עדכון הסמן לסוף
-    cursor_pos = 24 * 80 * 2;
-}
 
 // פונקציה לניקוי המסך
 void clear_screen() {
-    for (int i = 0; i < 80 * 25 * 2; i += 2) {
-        vidmem[i] = ' ';
-        vidmem[i+1] = cur_color;
+    for (int i = 0; i < SCREEN_COLS * MAX_ROWS; i += 2) {
+        terminal_buffer[i] = ' ' | cur_color<<8;
     }
+    cursor_pos = 0;
+    current_view_row = 0;
+    update_screen();
+
 }
 
 // פונקציה להדפסת מחרוזת
@@ -80,24 +87,37 @@ void printf (char* message, ...) {
         }
     }
 }
-
-
 void print_char(char c) {
-    // בדיקה: אם חרגנו מגבולות המסך (80*25*2 בייטים), יש לבצע גלילה
-    if (cursor_pos >= 80 * 25 * 2) {
-        scroll_screen();
+    // מניעת חריגה מה-Buffer הכללי (למשל 1000 שורות)
+    if (cursor_pos / 2 >= MAX_ROWS * SCREEN_COLS) {
+        return; 
     }
 
     if (c == '\n') {
-        cursor_pos = ((cursor_pos / 160) + 1) * 160;
+        cursor_pos = ((cursor_pos / (SCREEN_COLS * 2)) + 1) * (SCREEN_COLS * 2);
     } else {
-        vidmem[cursor_pos] = c;
-        vidmem[cursor_pos + 1] = cur_color;
+        terminal_buffer[cursor_pos / 2] = (unsigned short)c | (unsigned short)(cur_color << 8);
         cursor_pos += 2;
     }
+    
+    // בדיקה: האם הסמן עבר את גבול המסך הנוכחי (25 שורות מהתחלת התצוגה)?
+    int current_cursor_row = cursor_pos / (SCREEN_COLS * 2);
+    if (current_cursor_row >= current_view_row + SCREEN_ROWS) {
+        current_view_row = current_cursor_row - SCREEN_ROWS + 1;
+    }
+
+    update_screen();
 }
 
 void print_int(int num) {
+
+    //  בדיקת גלילה בתוך ה-Buffer (אם הגענו לסוף הזיכרון שהקצינו ב-RAM)
+    if (cursor_pos / 2 >= MAX_ROWS * SCREEN_COLS) {
+        // כאן נצטרך לוגיקת גלילה ל-Buffer עצמו אם נרצה לשמור היסטוריה אינסופית
+        // כרגע פשוט נמנע חריגה
+        return; 
+    }
+
     int old_color = cur_color; // שמירת הצבע הנוכחי
     set_color(RED_ON_BLACK);
 
@@ -126,6 +146,13 @@ void print_int(int num) {
 
 
 void print_hex(unsigned int pointer){
+
+    //  בדיקת גלילה בתוך ה-Buffer (אם הגענו לסוף הזיכרון שהקצינו ב-RAM)
+    if (cursor_pos / 2 >= MAX_ROWS * SCREEN_COLS) {
+        // כאן נצטרך לוגיקת גלילה ל-Buffer עצמו אם נרצה לשמור היסטוריה אינסופית
+        // כרגע פשוט נמנע חריגה
+        return; 
+    }
     char* hex = "0123456789ABCDEF";
     char buffer[11];
     buffer[0] = '0';
