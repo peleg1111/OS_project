@@ -130,8 +130,6 @@ void print_int(int num) {
 
     //  בדיקת גלילה בתוך ה-Buffer (אם הגענו לסוף הזיכרון שהקצינו ב-RAM)
     if (cursor_pos / 2 >= MAX_ROWS * SCREEN_COLS) {
-        // כאן נצטרך לוגיקת גלילה ל-Buffer עצמו אם נרצה לשמור היסטוריה אינסופית
-        // כרגע פשוט נמנע חריגה
         return; 
     }
 
@@ -166,8 +164,6 @@ void print_hex(unsigned int pointer){
 
     //  בדיקת גלילה בתוך ה-Buffer (אם הגענו לסוף הזיכרון שהקצינו ב-RAM)
     if (cursor_pos / 2 >= MAX_ROWS * SCREEN_COLS) {
-        // כאן נצטרך לוגיקת גלילה ל-Buffer עצמו אם נרצה לשמור היסטוריה אינסופית
-        // כרגע פשוט נמנע חריגה
         return; 
     }
     char* hex = "0123456789ABCDEF";
