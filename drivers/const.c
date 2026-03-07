@@ -1,7 +1,7 @@
 #include "const.h"
 
 static int cursor_pos = 0; // משתנה שזוכר איפה עצרנו
-    volatile unsigned short* video = (unsigned short*) VIDEO_ADDRESS;
+volatile unsigned short* video = (unsigned short*) VIDEO_ADDRESS;
 static int cur_color = WHITE_ON_BLACK;
 
 // חוצץ ששומר את כל הטקסט (תו + צבע)
@@ -31,7 +31,7 @@ void set_color(int new_color){
 
 // פונקציה לניקוי המסך
 void clear_screen() {
-    for (int i = 0; i < SCREEN_COLS * MAX_ROWS; i += 2) {
+    for (int i = 0; i < SCREEN_COLS * MAX_ROWS; i ++) {
         terminal_buffer[i] = ' ' | cur_color<<8;
     }
     cursor_pos = 0;
@@ -80,6 +80,16 @@ void printf (char* message, ...) {
                 print_hex(ptr);
             }
 
+            if(message[i]>='0'|| message[i]<='9'){
+                int f_num = message[i]-'0';
+                i++;
+                if (message[i] == 'f'){
+                i++;
+                float num = va_arg(args,double);
+                print_float(num,f_num);
+                }
+                i--;
+            }
         }
         else
         {
@@ -95,11 +105,18 @@ void print_char(char c) {
 
     if (c == '\n') {
         cursor_pos = ((cursor_pos / (SCREEN_COLS * 2)) + 1) * (SCREEN_COLS * 2);
-    } else {
+    }
+    else if (c == '\t'){
+        for(int i = 0; i<4;i++){
+        terminal_buffer[cursor_pos / 2] = ' ' | (unsigned short)(cur_color << 8);
+        cursor_pos += 2;
+        }
+    }
+    else {
         terminal_buffer[cursor_pos / 2] = (unsigned short)c | (unsigned short)(cur_color << 8);
         cursor_pos += 2;
     }
-    
+
     // בדיקה: האם הסמן עבר את גבול המסך הנוכחי (25 שורות מהתחלת התצוגה)?
     int current_cursor_row = cursor_pos / (SCREEN_COLS * 2);
     if (current_cursor_row >= current_view_row + SCREEN_ROWS) {
@@ -171,3 +188,73 @@ void print_hex(unsigned int pointer){
 }
 
 
+void print_float(float num, int precision) {
+    int old_color = cur_color;
+    set_color(RED_ON_BLACK);
+
+    // 1. טיפול במספרים שליליים
+    if (num < 0) {
+        print_char('-');
+        num *= -1;
+    }
+
+    int int_num = (int)num;
+    print_int(int_num);
+
+    print_char('.');
+
+    float f_num = num - (float)int_num; 
+    
+    for (int i = 0; i < precision; i++) {
+        f_num *= 10;
+        int digit = (int)f_num;
+        print_char(digit + '0');
+        f_num -= (float)digit;
+    }
+
+    set_color(old_color);
+}
+
+int len(char* str){
+    int i = 0;
+    while(str[i]!=null){
+        i++;
+    }
+    return i;
+}
+int countChar(char* str, char c){
+    int num = 0;
+    int i = 0;
+    while(str[i] != null){
+        
+        if(c == str[i]){
+            num++;
+        }
+        i++;
+    }
+    return num;
+}
+// מחליף את כל האותיות הרצויות באותיות אחרות ומחזיר את הכמות שהפעולה החליפה
+int replace(char* str, char to_replace, char new_val){
+    int i = 0;
+    int num = 0;
+    while(str[i] != null){
+        if(str[i] == to_replace){
+            str[i] = new_val;
+            num++;
+        }
+        i++;
+    }
+    return num;
+}
+
+int in_str(char* str , char c){
+    int i = 0; 
+    while(str[i] != null){
+        if(c== str[i]){
+            return 1;
+        }
+        i++;
+    }
+    return 0;
+}
