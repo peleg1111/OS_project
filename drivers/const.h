@@ -36,6 +36,10 @@ int in_str(char* str , char c);
 int len(char* str);
 int countChar(char* str , char c);
 int replace(char* str, char to_replace, char new_val);
-
+int can_print();
+void header_msg();
+void ERR_msg(char* err);
+int strcmp(unsigned char* s1, char* s2);
+void update_cursor();
 
 #endif

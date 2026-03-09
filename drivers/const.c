@@ -4,18 +4,29 @@ static int cursor_pos = 0; // משתנה שזוכר איפה עצרנו
 volatile unsigned short* video = (unsigned short*) VIDEO_ADDRESS;
 static int cur_color = WHITE_ON_BLACK;
 
+
 // חוצץ ששומר את כל הטקסט (תו + צבע)
 unsigned short terminal_buffer[MAX_ROWS * SCREEN_COLS];
 int current_view_row = 0; // השורה שאותה אנחנו רואים כרגע בראש המסך
 
+
 void update_screen() {
-    // הגדרה כ-short מאפשרת לנו להעתיק תו + צבע בפקודה אחת
     for (int i = 0; i < SCREEN_ROWS; i++) {
         for (int j = 0; j < SCREEN_COLS; j++) {
-            int buffer_index = (current_view_row + i) * SCREEN_COLS + j;
-            video[i * SCREEN_COLS + j] = terminal_buffer[buffer_index];
+            // חישוב אינדקס בתוך ה-Buffer הכללי
+            int buffer_row = current_view_row + i;
+            
+            // הגנה: אם השורה חורגת מה-MAX_ROWS, אל תדפיס זבל
+            if (buffer_row < MAX_ROWS) {
+                int buffer_index = buffer_row * SCREEN_COLS + j;
+                video[i * SCREEN_COLS + j] = terminal_buffer[buffer_index];
+            } else {
+                clear_screen();
+                ERR_msg("חרגתה מגבולות המסך - מתבצעה איפוס");
+            }
         }
     }
+    update_cursor();
 }
 
 void print_char_to_buffer(char c, int row, int col) {
@@ -27,8 +38,16 @@ void print_char_to_buffer(char c, int row, int col) {
 void set_color(int new_color){
     cur_color = new_color;
 }
+void header_msg(){
+    set_color(YELLOW_ON_BLACK);
+    printf("\n\nenter commend--> ");
+    set_color(WHITE_ON_BLACK);
+}
 
-
+void ERR_msg(char* err){
+    set_color(RED_ON_BLACK);
+    printf("\ngot --->>>  %s\n",err);
+}
 // פונקציה לניקוי המסך
 void clear_screen() {
     for (int i = 0; i < SCREEN_COLS * MAX_ROWS; i ++) {
@@ -44,6 +63,9 @@ void clear_screen() {
 void printf (char* message, ...) {
     va_list args;
     va_start(args,message);
+    if(can_print()==0){
+        return;
+    }
 
     for (int i = 0; message[i] != null; i++) 
     {
@@ -84,11 +106,9 @@ void printf (char* message, ...) {
                 int f_num = message[i]-'0';
                 i++;
                 if (message[i] == 'f'){
-                i++;
                 float num = va_arg(args,double);
                 print_float(num,f_num);
                 }
-                i--;
             }
         }
         else
@@ -98,14 +118,23 @@ void printf (char* message, ...) {
     }
 }
 void print_char(char c) {
+
     // מניעת חריגה מה-Buffer הכללי (למשל 1000 שורות)
-    if (cursor_pos / 2 >= MAX_ROWS * SCREEN_COLS) {
-        return; 
+    if(can_print()==0){
+        return;
     }
 
     if (c == '\n') {
         cursor_pos = ((cursor_pos / (SCREEN_COLS * 2)) + 1) * (SCREEN_COLS * 2);
     }
+
+    else if (c == '\b') { // מחיקה (Backspace)
+        if (cursor_pos > 0) {
+            cursor_pos -= 2;
+            terminal_buffer[cursor_pos / 2] = ' ' | (unsigned short)(cur_color << 8);
+        }
+    }
+
     else if (c == '\t'){
         for(int i = 0; i<4;i++){
         terminal_buffer[cursor_pos / 2] = ' ' | (unsigned short)(cur_color << 8);
@@ -129,8 +158,8 @@ void print_char(char c) {
 void print_int(int num) {
 
     //  בדיקת גלילה בתוך ה-Buffer (אם הגענו לסוף הזיכרון שהקצינו ב-RAM)
-    if (cursor_pos / 2 >= MAX_ROWS * SCREEN_COLS) {
-        return; 
+    if(can_print()==0){
+        return;
     }
 
     int old_color = cur_color; // שמירת הצבע הנוכחי
@@ -163,8 +192,8 @@ void print_int(int num) {
 void print_hex(unsigned int pointer){
 
     //  בדיקת גלילה בתוך ה-Buffer (אם הגענו לסוף הזיכרון שהקצינו ב-RAM)
-    if (cursor_pos / 2 >= MAX_ROWS * SCREEN_COLS) {
-        return; 
+    if(can_print()==0){
+        return;
     }
     char* hex = "0123456789ABCDEF";
     char buffer[11];
@@ -185,6 +214,10 @@ void print_hex(unsigned int pointer){
 
 
 void print_float(float num, int precision) {
+    if(can_print()==0){
+        return;
+    }
+
     int old_color = cur_color;
     set_color(RED_ON_BLACK);
 
@@ -244,13 +277,44 @@ int replace(char* str, char to_replace, char new_val){
     return num;
 }
 
-int in_str(char* str , char c){
-    int i = 0; 
-    while(str[i] != null){
-        if(c== str[i]){
-            return 1;
-        }
+int strcmp(unsigned char* s1, char* s2) {
+    int i = 0;
+    while (s1[i] != '\0' && s2[i] != '\0') {
+        if (s1[i] != s2[i]) return 1;
         i++;
     }
-    return 0;
+    return (s1[i] == s2[i]) ? 0 : 1;
+}
+
+int can_print(){
+    if(cursor_pos / 2 >= MAX_ROWS * SCREEN_COLS){
+        return 0;
+    }
+    return 1;
+}
+
+
+// קבלת קלט מהמשתמש
+unsigned char port_byte_in(unsigned short port) {
+    unsigned char result;
+    __asm__ __volatile__ ("inb %1, %0" : "=a" (result) : "nd" (port));
+    return result;
+}
+
+void port_byte_out(unsigned short port, unsigned char data) {
+    __asm__ __volatile__ ("outb %0, %1" : : "a" (data), "nd" (port));
+}
+
+void update_cursor(){
+    int pos = cursor_pos;
+
+    while(pos >= (2*SCREEN_COLS*SCREEN_ROWS)){
+        pos -= SCREEN_COLS*2;
+    }
+    pos = pos/2;
+
+    port_byte_out(0x3D4 , 0x0E);
+    port_byte_out(0x3D5, ( pos >> 8) & 0xFF);
+    port_byte_out(0x3D4 , 0x0F);
+    port_byte_out(0x3D5, pos & 0xFF);
 }
