@@ -22,7 +22,6 @@ void update_screen() {
                 video[i * SCREEN_COLS + j] = terminal_buffer[buffer_index];
             } else {
                 clear_screen();
-                ERR_msg("חרגתה מגבולות המסך - מתבצעה איפוס");
             }
         }
     }
@@ -40,14 +39,10 @@ void set_color(int new_color){
 }
 void header_msg(){
     set_color(YELLOW_ON_BLACK);
-    printf("\n\nenter commend--> ");
+    printf("\n\nenter commend-->! ");
     set_color(WHITE_ON_BLACK);
 }
 
-void ERR_msg(char* err){
-    set_color(RED_ON_BLACK);
-    printf("\ngot --->>>  %s\n",err);
-}
 // פונקציה לניקוי המסך
 void clear_screen() {
     for (int i = 0; i < SCREEN_COLS * MAX_ROWS; i ++) {
@@ -102,7 +97,7 @@ void printf (char* message, ...) {
                 print_hex(ptr);
             }
 
-            if(message[i]>='0'|| message[i]<='9'){
+            else if(message[i]>='0'|| message[i]<='9'){
                 int f_num = message[i]-'0';
                 i++;
                 if (message[i] == 'f'){
@@ -129,7 +124,7 @@ void print_char(char c) {
     }
 
     else if (c == '\b') { // מחיקה (Backspace)
-        if (cursor_pos > 0) {
+        if (cursor_pos > 0 && (terminal_buffer[cursor_pos /2 -1]& 0xFF)!= '!') {
             cursor_pos -= 2;
             terminal_buffer[cursor_pos / 2] = ' ' | (unsigned short)(cur_color << 8);
         }
@@ -280,10 +275,10 @@ int replace(char* str, char to_replace, char new_val){
 int strcmp(unsigned char* s1, char* s2) {
     int i = 0;
     while (s1[i] != '\0' && s2[i] != '\0') {
-        if (s1[i] != s2[i]) return 1;
+        if (s1[i] != s2[i]) return 0;
         i++;
     }
-    return (s1[i] == s2[i]) ? 0 : 1;
+    return (s1[i] == s2[i]) ? 1 : 0;
 }
 
 int can_print(){
@@ -317,4 +312,28 @@ void update_cursor(){
     port_byte_out(0x3D5, ( pos >> 8) & 0xFF);
     port_byte_out(0x3D4 , 0x0F);
     port_byte_out(0x3D5, pos & 0xFF);
+}
+
+
+int starts_with(char* str, char* c) {
+    int i = 0;
+    while (c[i] != '\0') {
+        if (str[i] != c[i]) return 0;
+        i++;
+    }
+    return 1;
+}
+// את החלקים ומחזיר את כמות החלקים (parts) שם ב 
+int split(char* str, char c,char** parts){
+    int l = len(str);
+    int index = 1;
+    parts[0] = str; 
+    for(int i = 0; i< l; i++){
+        if(str[i] == c){
+            str[i] = null;
+            parts[index] = &str[i+1];
+            index++;
+        }
+    }
+    return index;
 }

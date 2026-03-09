@@ -12,6 +12,7 @@ typedef __builtin_va_list va_list;
 #define false 0
 #define null 0x00
 #define bool int
+#define KEY_UP 0x48
 
 // גדלי המסך
 #define MAX_ROWS 100
@@ -38,8 +39,9 @@ int countChar(char* str , char c);
 int replace(char* str, char to_replace, char new_val);
 int can_print();
 void header_msg();
-void ERR_msg(char* err);
 int strcmp(unsigned char* s1, char* s2);
 void update_cursor();
+int start_with(char* str, char* prefix);
+int split(char* str, char c,char** parts);
 
 #endif

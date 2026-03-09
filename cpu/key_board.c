@@ -45,6 +45,7 @@ void isr_handler() {
     unsigned char scan_code = port_byte_in(0x60);
     if (scan_code < 0x80) { //  (ללא העזיבה של המקש)רק לחיצות 
         char letter = keyboard_map[scan_code];
+        
         if (letter != 0) {
 
             print_char(letter);
@@ -57,4 +58,5 @@ void isr_handler() {
         }
     }
     port_byte_out(0x20, 0x20); // EOI --> משחרר את ההאזנה על המקלדת כדי להמשיך לקלוט מקשים
+    
 }

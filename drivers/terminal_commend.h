@@ -9,6 +9,4 @@ void clean_commend_buffer();
 extern unsigned char cmd_buffer[SCREEN_COLS];
 extern int cmd_index;
 
-
-
 #endif

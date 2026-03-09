@@ -13,7 +13,7 @@ void clean_commend_buffer() {
 }
 
 void handle_commend() {
-    if(strcmp(cmd_buffer,"clean")==0){
+    if(strcmp(cmd_buffer,"clean") == 1){
         clear_screen();
     }
     clean_commend_buffer();
