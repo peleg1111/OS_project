@@ -21,4 +21,5 @@ void load_idt() {
     idt_reg.limit = IDT_ENTRIES * sizeof(idt_gate_t) - 1;
     // פקודת Assembly שטוענת את הכתובת למעבד
     __asm__ __volatile__("lidt (%0)" : : "r" (&idt_reg));
+
 }

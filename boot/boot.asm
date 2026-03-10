@@ -16,7 +16,7 @@ start:
 
 load_kernel:
     mov bx, KERNEL_OFFSET 
-    mov dh, 30            ; הגדלתי ל-30 סקטורים כי הקרנל שלך גדל
+    mov dh, 30   ; יש להגדיל את הכמות 
     mov dl, [BOOT_DRIVE]
     mov ah, 0x02          
     mov al, dh

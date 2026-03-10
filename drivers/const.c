@@ -331,9 +331,26 @@ int split(char* str, char c,char** parts){
     for(int i = 0; i< l; i++){
         if(str[i] == c){
             str[i] = null;
-            parts[index] = &str[i+1];
-            index++;
+            if(str[i+1] != c){
+                parts[index] = &str[i+1];
+                index++;
+            }
         }
     }
     return index;
+}
+
+void lower(char* str){
+    for(int i = 0; str[i] != null; i++){
+        if(str[i]>='A' && str[i]<='Z'){
+            str[i] += (int)('a'-'A'); 
+        }
+    }
+}
+void upper(char* str){
+    for(int i = 0; str[i] != null; i++){
+        if(str[i]>='a' && str[i]<='z'){
+            str[i] -= (int)('a'-'A'); 
+        }
+    }
 }

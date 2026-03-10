@@ -23,6 +23,14 @@ unsigned char keyboard_map[] = {
     ' '	/* Space bar */
 };
 
+unsigned char shift_keyboard_map[] = {
+    0, 27, 0, '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', 
+    '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 
+    0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', 
+    0, '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0, 0, 0, ' '
+};
+static int on_shift = 0;
+static int caps_lock = 1;
 void pic_remap(){
     port_byte_out(0x20, 0x11);
     port_byte_out(0x21, 0x20);
@@ -43,8 +51,30 @@ void pic_remap(){
 
 void isr_handler() {
     unsigned char scan_code = port_byte_in(0x60);
+    port_byte_out(0x20, 0x20); // EOI --> משחרר את ההאזנה על המקלדת כדי להמשיך לקלוט מקשים
+
+    if(scan_code == 0xB6 || scan_code == 0xAA) {
+        on_shift = 0;
+        return;
+    }
+
+    if (scan_code == 0x36 || scan_code == 0x2A) {
+        on_shift = 1;
+        return;
+    }
+    if(scan_code == 0x3A){
+        caps_lock = !caps_lock;
+        return;
+    }
+
     if (scan_code < 0x80) { //  (ללא העזיבה של המקש)רק לחיצות 
-        char letter = keyboard_map[scan_code];
+        char letter;
+        if(on_shift == 1 || caps_lock == 0){
+            letter = shift_keyboard_map[scan_code];
+        }
+        else{
+            letter = keyboard_map[scan_code];
+        }
         
         if (letter != 0) {
 
@@ -56,7 +86,5 @@ void isr_handler() {
                 header_msg();            // מדפיס שורת פקודה חדשה
             }
         }
-    }
-    port_byte_out(0x20, 0x20); // EOI --> משחרר את ההאזנה על המקלדת כדי להמשיך לקלוט מקשים
-    
+    }    
 }
