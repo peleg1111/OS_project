@@ -14,6 +14,7 @@ typedef __builtin_va_list va_list;
 #define bool int
 #define KEY_UP 0x48
 
+
 // גדלי המסך
 #define MAX_ROWS 100
 #define SCREEN_ROWS 25
@@ -42,6 +43,9 @@ void header_msg();
 int strcmp(unsigned char* s1, char* s2);
 void update_cursor();
 int start_with(char* str, char* prefix);
-int split(char* str, char c,char** parts);
+int split(char* str, char c,char* parts[]);
+char* strip(char* str);
+int get_driver_name_size();
+extern int cur_color;
 
 #endif

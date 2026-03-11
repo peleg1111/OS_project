@@ -1,22 +1,22 @@
 [bits 16]
 [org 0x7c00]
 
-KERNEL_OFFSET equ 0x1000 
+KERNEL_OFFSET equ 0x1000
 
 start:
-    mov [BOOT_DRIVE], dl 
-    
+    mov [BOOT_DRIVE], dl
+
     ; הגדרת מחסנית
     mov bp, 0x9000
     mov sp, bp
 
-    call load_kernel      
-    call switch_to_pm     
-    jmp $                 
+    call load_kernel
+    call switch_to_pm
+    jmp $
 
 load_kernel:
     mov bx, KERNEL_OFFSET 
-    mov dh, 30   ; יש להגדיל את הכמות 
+    mov dh, 54   ; יש להגדיל את הכמות 
     mov dl, [BOOT_DRIVE]
     mov ah, 0x02          
     mov al, dh
@@ -36,7 +36,7 @@ disk_error:
 ; --- GDT ---
 gdt_start:
     dq 0x0                
-gdt_code: 
+gdt_code:
     dw 0xffff, 0x0
     db 0x0, 10011010b, 11001111b, 0x0
 gdt_data:
@@ -64,11 +64,11 @@ init_pm:
     mov es, ax
     mov fs, ax
     mov gs, ax
-    
+
     mov ebp, 0x90000        
     mov esp, ebp
 
-    call KERNEL_OFFSET      
+    call KERNEL_OFFSET
     jmp $
 
 BOOT_DRIVE db 0

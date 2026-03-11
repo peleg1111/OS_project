@@ -2,13 +2,13 @@
 
 static int cursor_pos = 0; // משתנה שזוכר איפה עצרנו
 volatile unsigned short* video = (unsigned short*) VIDEO_ADDRESS;
-static int cur_color = WHITE_ON_BLACK;
+int cur_color = WHITE_ON_BLACK;
+char driver_name[20] = "enter commend-->";
 
 
 // חוצץ ששומר את כל הטקסט (תו + צבע)
 unsigned short terminal_buffer[MAX_ROWS * SCREEN_COLS];
 int current_view_row = 0; // השורה שאותה אנחנו רואים כרגע בראש המסך
-
 
 void update_screen() {
     for (int i = 0; i < SCREEN_ROWS; i++) {
@@ -38,9 +38,10 @@ void set_color(int new_color){
     cur_color = new_color;
 }
 void header_msg(){
-    set_color(YELLOW_ON_BLACK);
-    printf("\n\nenter commend-->! ");
-    set_color(WHITE_ON_BLACK);
+    printf("\n\n%s",driver_name);
+}
+int get_driver_name_size(){
+    return len(driver_name);
 }
 
 // פונקציה לניקוי המסך
@@ -97,7 +98,7 @@ void printf (char* message, ...) {
                 print_hex(ptr);
             }
 
-            else if(message[i]>='0'|| message[i]<='9'){
+            else if(message[i]>='0' && message[i]<='9'){
                 int f_num = message[i]-'0';
                 i++;
                 if (message[i] == 'f'){
@@ -124,7 +125,7 @@ void print_char(char c) {
     }
 
     else if (c == '\b') { // מחיקה (Backspace)
-        if (cursor_pos > 0 && (terminal_buffer[cursor_pos /2 -1]& 0xFF)!= '!') {
+        if (cursor_pos > 0 && (cursor_pos / 2) > ((cursor_pos / 2)/SCREEN_COLS)*SCREEN_COLS + get_driver_name_size() ) {
             cursor_pos -= 2;
             terminal_buffer[cursor_pos / 2] = ' ' | (unsigned short)(cur_color << 8);
         }
@@ -216,7 +217,7 @@ void print_float(float num, int precision) {
     int old_color = cur_color;
     set_color(RED_ON_BLACK);
 
-    // 1. טיפול במספרים שליליים
+    // טיפול במספרים שליליים
     if (num < 0) {
         print_char('-');
         num *= -1;
@@ -289,7 +290,7 @@ int can_print(){
 }
 
 
-// קבלת קלט מהמשתמש
+// קבלת קלט מהמחשב
 unsigned char port_byte_in(unsigned short port) {
     unsigned char result;
     __asm__ __volatile__ ("inb %1, %0" : "=a" (result) : "nd" (port));
@@ -324,7 +325,7 @@ int starts_with(char* str, char* c) {
     return 1;
 }
 // את החלקים ומחזיר את כמות החלקים (parts) שם ב 
-int split(char* str, char c,char** parts){
+int split(char* str, char c,char* parts[]){
     int l = len(str);
     int index = 1;
     parts[0] = str; 
@@ -353,4 +354,20 @@ void upper(char* str){
             str[i] -= (int)('a'-'A'); 
         }
     }
+}
+
+char* strip(char* str){
+    while(str[0] == ' '){
+        str += 1;
+    }
+    int i = 0;
+    while(str[i]!= null){
+        i++;
+    }
+    i--;
+    while(str[i] == ' '){
+        str[i] = null;
+        i--;
+    }
+    return str;
 }

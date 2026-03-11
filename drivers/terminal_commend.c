@@ -3,7 +3,8 @@
 
 unsigned char cmd_buffer[SCREEN_COLS];
 int cmd_index = 0;
-
+void set_color(int color);
+void lower(char* c);
 
 void clean_commend_buffer() {
     for(int i = 0; i < SCREEN_COLS; i++) {
@@ -13,9 +14,32 @@ void clean_commend_buffer() {
 }
 
 void handle_commend() {
-    if(strcmp(cmd_buffer,"clean") == 1){
+    // פירוק הפקודה
+    char* parts[10];
+    char* c = strip(cmd_buffer);
+    int size = split(c , ' ' , parts);
+    
+    if (size == 0) return; // פקודה ריקה
+
+    // ההדפסה של הפקודה
+    printf("cmd got -->> ");
+    for(int i = 0; i < size ; i++){
+        lower(parts[i]);
+        printf("$%s$",parts[i]);
+    }
+
+    // הניתוח של הפקודה
+
+    if(strcmp(parts[0], "clean") == 1){
         clear_screen();
     }
+    else {
+        int old_color = cur_color;
+        set_color(RED_ON_BLACK);
+        printf("\nUnknown command: %s", parts[0]);
+        set_color(old_color);
+    }
+    // איפוס הפקודה לאחר הלוגיקה שלה
     clean_commend_buffer();
 }
 
