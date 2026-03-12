@@ -9,7 +9,7 @@ void set_up_kernel();
 void main() {
 
     set_up_kernel();
-    //printf("dsthfgb");
+    printf("dsthfgb");
     while(1){
         __asm__ __volatile__("hlt");
     }
@@ -28,6 +28,5 @@ void set_up_kernel(){
     clean_commend_buffer();
     
     printf("kernel loaded successfully");
-
     header_msg();
 }

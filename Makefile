@@ -93,4 +93,4 @@ clean:
 
 #הרצה של הקוד
 run: all
-	qemu-system-i386 -drive format=raw,file=$(IMAGE) -display sdl
+	qemu-system-i386 -drive format=raw,file=$(IMAGE)
