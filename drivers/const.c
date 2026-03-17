@@ -1,7 +1,7 @@
 #include "const.h"
 
 static int cursor_pos = 0; // משתנה שזוכר איפה עצרנו
-volatile unsigned short* video = (unsigned short*) VIDEO_ADDRESS;
+volatile unsigned short* video = (unsigned short*) VIDEO_ADDRESS ;
 int cur_color = WHITE_ON_BLACK;
 char driver_name[20] = "enter commend-->";
 
@@ -19,18 +19,32 @@ void update_screen() {
             // הגנה: אם השורה חורגת מה-MAX_ROWS, אל תדפיס זבל
             if (buffer_row < MAX_ROWS) {
                 int buffer_index = buffer_row * SCREEN_COLS + j;
-                video[i * SCREEN_COLS + j] = terminal_buffer[buffer_index];
+                if (buffer_index >= 0 && buffer_index < MAX_ROWS * SCREEN_COLS) {
+            video[i * SCREEN_COLS + j] = terminal_buffer[buffer_index];
+        }
             } else {
                 clear_screen();
             }
         }
     }
     update_cursor();
+
+    // DEBUG: הדפסת ערכי current_view_row ו-cursor_pos בפינה הימנית העליונה
+    printf("DEBUG C:%d P:%d\n", current_view_row, cursor_pos);
+    printf(' ', dbg_col+4);
+    printf('P', dbg_col+5);
+    printf(':', dbg_col+6);
+    printf(((debug_pos/100)%10)+'0', dbg_col+7);
+    printf(((debug_pos/10)%10)+'0', dbg_col+8);
+    printf((debug_pos%10)+'0', dbg_col+9);
 }
 
 void print_char_to_buffer(char c, int row, int col) {
     //  מקדם את הצבע לפני התו וה-| מחבר בניהם לביט אחד 
-    terminal_buffer[row * SCREEN_COLS + col] = (c | (cur_color << 8));
+    int idx = row * SCREEN_COLS + col;
+    if (idx >= 0 && idx < MAX_ROWS * SCREEN_COLS) {
+        terminal_buffer[idx] = (c | (cur_color << 8));
+    }
 }
 
 
@@ -47,7 +61,13 @@ int get_driver_name_size(){
 // פונקציה לניקוי המסך
 void clear_screen() {
     for (int i = 0; i < SCREEN_COLS * MAX_ROWS; i ++) {
-        terminal_buffer[i] = ' ' | cur_color<<8;
+        if (i >= 0 && i < MAX_ROWS * SCREEN_COLS) {
+            if (i >= 0 && i < MAX_ROWS * SCREEN_COLS) {
+            if (i >= 0 && i < MAX_ROWS * SCREEN_COLS) {
+            terminal_buffer[i] = ' ' | cur_color<<8;
+        }
+        }
+        }
     }
     cursor_pos = 0;
     current_view_row = 0;
@@ -127,18 +147,27 @@ void print_char(char c) {
     else if (c == '\b') { // מחיקה (Backspace)
         if (cursor_pos > 0 && (cursor_pos / 2) > ((cursor_pos / 2)/SCREEN_COLS)*SCREEN_COLS + get_driver_name_size() ) {
             cursor_pos -= 2;
-            terminal_buffer[cursor_pos / 2] = ' ' | (unsigned short)(cur_color << 8);
+            int idx = cursor_pos / 2;
+            if (idx >= 0 && idx < MAX_ROWS * SCREEN_COLS) {
+                terminal_buffer[idx] = ' ' | (unsigned short)(cur_color << 8);
+            }
         }
     }
 
     else if (c == '\t'){
         for(int i = 0; i<4;i++){
-        terminal_buffer[cursor_pos / 2] = ' ' | (unsigned short)(cur_color << 8);
+        int idx = cursor_pos / 2;
+        if (idx >= 0 && idx < MAX_ROWS * SCREEN_COLS) {
+            terminal_buffer[idx] = ' ' | (unsigned short)(cur_color << 8);
+        }
         cursor_pos += 2;
         }
     }
     else {
-        terminal_buffer[cursor_pos / 2] = (unsigned short)c | (unsigned short)(cur_color << 8);
+        int idx = cursor_pos / 2;
+        if (idx >= 0 && idx < MAX_ROWS * SCREEN_COLS) {
+            terminal_buffer[idx] = (unsigned short)c | (unsigned short)(cur_color << 8);
+        }
         cursor_pos += 2;
     }
 

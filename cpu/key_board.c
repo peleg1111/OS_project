@@ -7,7 +7,7 @@ void port_byte_out(unsigned short port, unsigned char data);
 
 // לתווים בעת לחיצה על המקלדת hex תרגום מ
 // 0 = מקש שאיןן לו טיפול
-unsigned char keyboard_map[] = {
+unsigned char keyboard_map[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
     '9', '0', '-', '=', '\b',	/* Backspace */
     '\t',			/* Tab */
@@ -23,7 +23,7 @@ unsigned char keyboard_map[] = {
     ' '	/* Space bar */
 };
 
-unsigned char shift_keyboard_map[] = {
+unsigned char shift_keyboard_map[128] = {
     0, 27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', 
     '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 
     0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', 

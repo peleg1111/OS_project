@@ -12,11 +12,10 @@ typedef __builtin_va_list va_list;
 #define false 0
 #define null 0x00
 #define bool int
-#define KEY_UP 0x48
 
 
 // גדלי המסך
-#define MAX_ROWS 100
+#define MAX_ROWS 30
 #define SCREEN_ROWS 25
 #define SCREEN_COLS 80
 
@@ -26,7 +25,7 @@ typedef __builtin_va_list va_list;
 #define WHITE_ON_BLACK 0x0F
 #define GREEN_ON_BLACK 0x0A
 #define YELLOW_ON_BLACK 0x0E
-
+#define BLUE_ON_BLACK 0x09
 // הצהרות לפונקציות
 void clear_screen();
 void printf(char* format, ...);
@@ -46,6 +45,7 @@ int start_with(char* str, char* prefix);
 int split(char* str, char c,char* parts[]);
 char* strip(char* str);
 int get_driver_name_size();
+
 extern int cur_color;
 
 #endif
