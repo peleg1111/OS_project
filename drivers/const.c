@@ -1,42 +1,44 @@
 #include "const.h"
-
-static int cursor_pos = 0; // משתנה שזוכר איפה עצרנו
-volatile unsigned short* video = (unsigned short*) VIDEO_ADDRESS ;
+#include "key_board.h"
+int cursor_pos = 0; // משתנה שזוכר איפה עצרנו
+volatile unsigned short* video = (unsigned short*) (VIDEO_ADDRESS);
 int cur_color = WHITE_ON_BLACK;
 char driver_name[20] = "enter commend-->";
-
-
+int last_pos = 0;
 // חוצץ ששומר את כל הטקסט (תו + צבע)
 unsigned short terminal_buffer[MAX_ROWS * SCREEN_COLS];
 int current_view_row = 0; // השורה שאותה אנחנו רואים כרגע בראש המסך
 
+void clean_commend_history();
+
 void update_screen() {
     for (int i = 0; i < SCREEN_ROWS; i++) {
         for (int j = 0; j < SCREEN_COLS; j++) {
-            // חישוב אינדקס בתוך ה-Buffer הכללי
             int buffer_row = current_view_row + i;
-            
-            // הגנה: אם השורה חורגת מה-MAX_ROWS, אל תדפיס זבל
+            // מניעת חריגה
             if (buffer_row < MAX_ROWS) {
                 int buffer_index = buffer_row * SCREEN_COLS + j;
                 if (buffer_index >= 0 && buffer_index < MAX_ROWS * SCREEN_COLS) {
-            video[i * SCREEN_COLS + j] = terminal_buffer[buffer_index];
-        }
-            } else {
+                    
+                    int buffer_index = buffer_row * SCREEN_COLS + j;
+                    int start_sel = min(cursor_pos, index_of_shift) / 2;
+                    int end_sel = max(cursor_pos, index_of_shift) / 2;
+
+                    if (index_of_shift != -1 && buffer_index >= start_sel && buffer_index < end_sel) {
+                        video[i * SCREEN_COLS + j] = (terminal_buffer[buffer_index] & 0x00FF) | (ORANGE_ON_BLACK << 8);
+                    } 
+                    else {
+                        video[i * SCREEN_COLS + j] = terminal_buffer[buffer_index];
+                    }
+
+                }
+            }
+            else {
                 clear_screen();
             }
         }
     }
     update_cursor();
-
-    // DEBUG: הדפסת ערכי current_view_row ו-cursor_pos בפינה הימנית העליונה
-    printf("DEBUG C:%d P:%d\n", current_view_row, cursor_pos);
-    printf(' ', dbg_col+4);
-    printf('P', dbg_col+5);
-    printf(':', dbg_col+6);
-    printf(((debug_pos/100)%10)+'0', dbg_col+7);
-    printf(((debug_pos/10)%10)+'0', dbg_col+8);
-    printf((debug_pos%10)+'0', dbg_col+9);
 }
 
 void print_char_to_buffer(char c, int row, int col) {
@@ -63,15 +65,17 @@ void clear_screen() {
     for (int i = 0; i < SCREEN_COLS * MAX_ROWS; i ++) {
         if (i >= 0 && i < MAX_ROWS * SCREEN_COLS) {
             if (i >= 0 && i < MAX_ROWS * SCREEN_COLS) {
-            if (i >= 0 && i < MAX_ROWS * SCREEN_COLS) {
-            terminal_buffer[i] = ' ' | cur_color<<8;
-        }
-        }
+                if (i >= 0 && i < MAX_ROWS * SCREEN_COLS) {
+                    terminal_buffer[i] = ' ' | cur_color<<8;
+                }
+            }
         }
     }
     cursor_pos = 0;
+    last_pos = 0;
     current_view_row = 0;
     update_screen();
+    clean_commend_history();
 
 }
 
@@ -79,10 +83,6 @@ void clear_screen() {
 void printf (char* message, ...) {
     va_list args;
     va_start(args,message);
-    if(can_print()==0){
-        return;
-    }
-
     for (int i = 0; message[i] != null; i++) 
     {
         if(message[i] == '%')
@@ -91,13 +91,10 @@ void printf (char* message, ...) {
 
             if(message[i] == 's'){
                 char* c = (char*)va_arg(args,int);
-                int old_color = cur_color;
-                set_color(GREEN_ON_BLACK);
                 for (int index = 0 ; c[index] != null; index++){
 
                     print_char(c[index]);   
                 }
-                set_color(old_color);
             }
 
             else if(message[i] == 'c'){
@@ -135,21 +132,21 @@ void printf (char* message, ...) {
 }
 void print_char(char c) {
 
-    // מניעת חריגה מה-Buffer הכללי (למשל 1000 שורות)
-    if(can_print()==0){
-        return;
-    }
-
     if (c == '\n') {
-        cursor_pos = ((cursor_pos / (SCREEN_COLS * 2)) + 1) * (SCREEN_COLS * 2);
+        cursor_pos = ((last_pos / (SCREEN_COLS * 2)) + 1) * (SCREEN_COLS * 2);
+        last_pos = cursor_pos;
     }
 
     else if (c == '\b') { // מחיקה (Backspace)
-        if (cursor_pos > 0 && (cursor_pos / 2) > ((cursor_pos / 2)/SCREEN_COLS)*SCREEN_COLS + get_driver_name_size() ) {
+        if (cursor_pos > 0 && (cursor_pos / 2) > get_safe_index()) {
             cursor_pos -= 2;
+            last_pos -= 2;
             int idx = cursor_pos / 2;
-            if (idx >= 0 && idx < MAX_ROWS * SCREEN_COLS) {
-                terminal_buffer[idx] = ' ' | (unsigned short)(cur_color << 8);
+            if (idx >= 0 && idx < MAX_ROWS * SCREEN_COLS && cursor_pos/2 >= get_safe_index()) {
+                if(cursor_pos < last_pos){
+                    move_line_left();
+                }
+                terminal_buffer[last_pos/2] = ' ' | (unsigned short)(cur_color << 8);
             }
         }
     }
@@ -161,17 +158,22 @@ void print_char(char c) {
             terminal_buffer[idx] = ' ' | (unsigned short)(cur_color << 8);
         }
         cursor_pos += 2;
+        last_pos += 2;
         }
     }
     else {
         int idx = cursor_pos / 2;
         if (idx >= 0 && idx < MAX_ROWS * SCREEN_COLS) {
+            if(cursor_pos < last_pos){
+                move_line_right();
+            }
             terminal_buffer[idx] = (unsigned short)c | (unsigned short)(cur_color << 8);
         }
         cursor_pos += 2;
+        last_pos += 2;
     }
 
-    // בדיקה: האם הסמן עבר את גבול המסך הנוכחי (25 שורות מהתחלת התצוגה)?
+    // האם הסמן עבר את גבול המסך הנוכחי 
     int current_cursor_row = cursor_pos / (SCREEN_COLS * 2);
     if (current_cursor_row >= current_view_row + SCREEN_ROWS) {
         current_view_row = current_cursor_row - SCREEN_ROWS + 1;
@@ -181,14 +183,8 @@ void print_char(char c) {
 }
 
 void print_int(int num) {
-
-    //  בדיקת גלילה בתוך ה-Buffer (אם הגענו לסוף הזיכרון שהקצינו ב-RAM)
-    if(can_print()==0){
-        return;
-    }
-
-    int old_color = cur_color; // שמירת הצבע הנוכחי
-    set_color(RED_ON_BLACK);
+    int old_color = cur_color;
+    set_color(YELLOW_ON_BLACK);
 
     if (num == 0) {
         print_char('0');
@@ -216,10 +212,9 @@ void print_int(int num) {
 
 void print_hex(unsigned int pointer){
 
-    //  בדיקת גלילה בתוך ה-Buffer (אם הגענו לסוף הזיכרון שהקצינו ב-RAM)
-    if(can_print()==0){
-        return;
-    }
+    int old_color = cur_color;
+    set_color(BLUE_ON_BLACK);
+
     char* hex = "0123456789ABCDEF";
     char buffer[11];
     buffer[0] = '0';
@@ -229,8 +224,7 @@ void print_hex(unsigned int pointer){
         buffer[i] = hex[pointer & 0xF];
         pointer >>=4; // מקדם את המצביעה 4 ביטים קדימה ושומר את הקודמים להדפסה
     }
-    int old_color = cur_color;
-    set_color(GREEN_ON_BLACK);
+
     for (int i = 0; buffer[i] != null; i++) {
         print_char(buffer[i]);
     }
@@ -239,13 +233,9 @@ void print_hex(unsigned int pointer){
 
 
 void print_float(float num, int precision) {
-    if(can_print()==0){
-        return;
-    }
 
     int old_color = cur_color;
-    set_color(RED_ON_BLACK);
-
+    set_color(YELLOW_ON_BLACK);
     // טיפול במספרים שליליים
     if (num < 0) {
         print_char('-');
@@ -265,7 +255,6 @@ void print_float(float num, int precision) {
         print_char(digit + '0');
         f_num -= (float)digit;
     }
-
     set_color(old_color);
 }
 
@@ -275,18 +264,6 @@ int len(char* str){
         i++;
     }
     return i;
-}
-int countChar(char* str, char c){
-    int num = 0;
-    int i = 0;
-    while(str[i] != null){
-        
-        if(c == str[i]){
-            num++;
-        }
-        i++;
-    }
-    return num;
 }
 // מחליף את כל האותיות הרצויות באותיות אחרות ומחזיר את הכמות שהפעולה החליפה
 int replace(char* str, char to_replace, char new_val){
@@ -311,13 +288,6 @@ int strcmp(unsigned char* s1, char* s2) {
     return (s1[i] == s2[i]) ? 1 : 0;
 }
 
-int can_print(){
-    if(cursor_pos / 2 >= MAX_ROWS * SCREEN_COLS){
-        return 0;
-    }
-    return 1;
-}
-
 
 // קבלת קלט מהמחשב
 unsigned char port_byte_in(unsigned short port) {
@@ -332,9 +302,10 @@ void port_byte_out(unsigned short port, unsigned char data) {
 
 void update_cursor(){
     int pos = cursor_pos;
-
-    while(pos >= (2*SCREEN_COLS*SCREEN_ROWS)){
-        pos -= SCREEN_COLS*2;
+    int size = SCREEN_COLS * SCREEN_ROWS * 2;
+    int down = SCREEN_COLS * 2;
+    while(pos >= (size)){
+        pos -= down;
     }
     pos = pos/2;
 
@@ -377,13 +348,6 @@ void lower(char* str){
         }
     }
 }
-void upper(char* str){
-    for(int i = 0; str[i] != null; i++){
-        if(str[i]>='a' && str[i]<='z'){
-            str[i] -= (int)('a'-'A'); 
-        }
-    }
-}
 
 char* strip(char* str){
     while(str[0] == ' '){
@@ -399,4 +363,31 @@ char* strip(char* str){
         i--;
     }
     return str;
+}
+
+int min(int a, int b){
+    return (a < b) ? a : b;
+}
+
+int max(int a, int b){
+    return (a > b) ? a : b;
+}
+void update_last_pos(){
+    while(cursor_pos > last_pos){
+        last_pos += 2;
+    }
+}
+void move_line_right(){
+    for (int i = last_pos; i > cursor_pos; i--){
+        terminal_buffer[i/2 +1] = terminal_buffer[i/2];
+    }
+}
+void move_line_left(){
+    for (int i = cursor_pos; i < last_pos; i++){
+        terminal_buffer[i/2] = terminal_buffer[i/2 +1];
+    }
+    
+}
+int get_safe_index(){
+    return((cursor_pos / 2)/SCREEN_COLS)*SCREEN_COLS + get_driver_name_size();
 }

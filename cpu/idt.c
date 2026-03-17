@@ -15,7 +15,6 @@ void set_idt_gate(int n, unsigned int handler) {
 
 void load_idt() {
     set_idt_gate(33, (unsigned int)isr_wrapper);
-
     idt_register_t reg;
     reg.base  = (unsigned int)&idt;
     reg.limit = IDT_ENTRIES * sizeof(idt_gate_t) - 1;

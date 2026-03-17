@@ -6,14 +6,17 @@
 #include "terminal_commend.h"
 #include "key_board.h"
 
-unsigned char port_byte_in(unsigned short port);
-void port_byte_out(unsigned short port, unsigned char data);
+
 void pic_remap();
-void isr_handler(); // 0X60 קוראים ישירות מ
+void isr_handler();
+void wait() ;
+void control_c_handler();
+void control_v_handler();
+void delete_txt_on_shift();
+void clean_row_of_terminal();
 
-// אומר שהמערך קיים איפשהו
 extern unsigned char keyboard_map[128];
-
-
+extern int index_of_shift;
+extern int on_shift;
 
 #endif

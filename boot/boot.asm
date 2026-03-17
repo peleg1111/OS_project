@@ -1,7 +1,7 @@
 [bits 16]
 [org 0x7c00]
 
-KERNEL_OFFSET equ 0x1000
+KERNEL_OFFSET equ 0xA000
 
 start:
     mov [BOOT_DRIVE], dl
@@ -16,7 +16,7 @@ start:
 
 load_kernel:
     mov bx, KERNEL_OFFSET 
-    mov dh, 54   ; יש להגדיל את הכמות 
+    mov dh, 50   ; יש להגדיל את הכמות 
     mov dl, [BOOT_DRIVE]
     mov ah, 0x02          
     mov al, dh
@@ -65,7 +65,7 @@ init_pm:
     mov fs, ax
     mov gs, ax
 
-    mov ebp, 0x90000        
+    mov ebp, 0x90000
     mov esp, ebp
 
     call KERNEL_OFFSET
