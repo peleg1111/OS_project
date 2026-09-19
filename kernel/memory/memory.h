@@ -76,7 +76,6 @@ void* malloc(unsigned int size);
 void* kmalloc(unsigned int size);
 void* realloc(void* ptr , unsigned int size);
 
-struct Thread_list;
 void __free(void* ptr,struct Thread_list* th);
 void _free(void *ptr);
 
@@ -86,9 +85,11 @@ void unmap(unsigned int virtual_addr);
 
 void memset(void *ptr, int value, unsigned int size);
 void memcopy(void *target, void *source, unsigned int size);
+unsigned int calc_heap_size(Heap_header* heap);
 
 extern Heap_header* user_heap_start_block;
 extern unsigned int user_heap_start;
+extern Heap_header* kernel_heap_start_block;
 
 #define free(ptr)          \
     do                     \

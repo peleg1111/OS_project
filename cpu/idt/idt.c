@@ -17,10 +17,6 @@ extern void invalid_opcode_wrapper();
 extern void double_fault_wrapper();
 extern void general_protection_fault_wrapper();
 
-const char *exception_messages[] = {
-    "Division By Zero"
-    // המשך עד 31 (בעתיד)
-};
 
 void set_idt_gate(int n, unsigned int handler, unsigned int flags, unsigned int sel) {
     idt[n].low_offset  = handler & 0xFFFF;
@@ -47,7 +43,7 @@ void general_protection_fault_handler(registers_t* regs){
         printf("\n\t\t[KERNEL PANIC] general protection fault in kernel mode\n");
         error_print(regs);
         __asm__ volatile("cli");
-        for (;;)    
+        for (;;)
         {
             __asm__ volatile("hlt");
         }
@@ -102,23 +98,23 @@ void double_fault_handler(registers_t* regs) {// כדי שזה יעבוד TSS ע
 }
 
 void error_print(registers_t* regs) {
-    printf("\n\t\t\tError: An error occurred!");
+    printf("\t\t\tError: An error occurred!");
 
-    printf("\n\tEIP: %p\n", regs->eip);// כתובת השגיאה
-    printf("\n\tCS: %p\n", regs->cs);// סגמנט הקוד
-    printf("\n\tFlags: %p\n", regs->flags);// דגלי המעבד
+    printf("\n\tEIP: %p", regs->eip);// כתובת השגיאה
+    printf("\tCS: %p\n", regs->cs);// סגמנט הקוד
+    printf("\tFlags: %p\n", regs->flags);// דגלי המעבד
     printf("\n\tInterupt Number: %p\n", regs->interupt_number);// מספר הפסיקה
-    printf("\n\tError Code: %p\n", regs->err_code);// קוד השגיאה
+    printf("\tError Code: %p\t", regs->err_code);// קוד השגיאה
 
-    printf("\tRegisters:\n");
+    printf("\n\tRegisters:\n");
 
-    printf("\t\t\tEAX: %p\n", regs->eax);
-    printf("\t\t\tEBX: %p\n", regs->ebx);
-    printf("\t\t\tECX: %p\n", regs->ecx);
-    printf("\t\t\tEDX: %p\n", regs->edx);
-    printf("\t\t\tEBP: %p\n", regs->ebp);
-    printf("\t\t\tESI: %p\n", regs->esi); 
-    printf("\t\t\tEDI: %p", regs->edi);
+    printf("\t\tEAX: %p\t", regs->eax);
+    printf("\tEBX: %p\n", regs->ebx);
+    printf("\t\tECX: %p\t", regs->ecx);
+    printf("\tEDX: %p\t", regs->edx);
+    printf("\tEBP: %p\n", regs->ebp);
+    printf("\t\tESI: %p\t", regs->esi); 
+    printf("\tEDI: %p", regs->edi);
 }
 
 void load_idt() {
@@ -149,4 +145,23 @@ void load_idt() {
     reg.limit = IDT_ENTRIES * sizeof(idt_gate_t) - 1;
 
     __asm__ __volatile__("lidt %0" : : "m"(reg));
+}
+
+void pic_remap()
+{
+    port_byte_out(0x20, 0x11);
+    port_byte_out(0x21, 0x20);
+    port_byte_out(0x21, 0x04);
+    port_byte_out(0x21, 0x01);
+
+    port_byte_out(0xA0, 0x11);
+    port_byte_out(0xA1, 0x28);
+    port_byte_out(0xA1, 0x02);
+    port_byte_out(0xA1, 0x01);
+
+    // 0xF8 = 11111000 -> פותח את IRQ0 (טיימר), IRQ1 (מקלדת), IRQ2 (Cascade לסלייב)
+    port_byte_out(0x21, 0xF8);
+
+    // 0xEF = 11101111 -> פותח את IRQ12 (עכבר) בתוך ה-Slave PIC
+    port_byte_out(0xA1, 0xEF);
 }

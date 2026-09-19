@@ -134,6 +134,10 @@ void printf (char* message, ...) {
                 int num = va_arg(args,int);
                 print_int(num);
             }
+            else if(message[i] == 'u'){
+                unsigned int num = va_arg(args,unsigned int);
+                print_unsigned_int(num);
+            }
 
             else if (message[i] == 'p' || message[i] == 'x'){
                 unsigned int ptr = va_arg(args, unsigned int);
@@ -240,7 +244,39 @@ void print_int(int num) {
     set_color(old_color);
 }
 
+void print_unsigned_int(unsigned int num){
+    int old_color = print_info.cur_color;
+    set_color(YELLOW_ON_BLACK);
 
+    if (num == 0)
+    {
+        print_char('0');
+    }
+    else
+    {
+        if (num < 0)
+        {
+            print_char('-');
+            num = -num;
+        }
+
+        char digits_str[12];
+        int i = 0;
+        while (num > 0)
+        {
+            digits_str[i++] = (num % 10) + '0';
+            num /= 10;
+        }
+
+        int idx = print_info.cursor_pos / 2;
+        // הדפסה בסדר הפוך כיוון שרשמתי את הערכים בסדר הפוך
+        for (int index = i - 1; idx < MAX_ROWS * SCREEN_COLS && index >= 0; index--)
+        {
+            print_char(digits_str[index]);
+        }
+    }
+    set_color(old_color);
+}
 
 void print_hex(unsigned int pointer){
 

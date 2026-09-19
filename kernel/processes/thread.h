@@ -2,9 +2,9 @@
 #define THREAD_H
 
 #include "Queue.h"
-#include "processe.h"
+#include "process.h"
 
-struct Processe;
+struct Process;
 
 #define STACK_SIZE 4096
 
@@ -45,7 +45,7 @@ typedef struct Thread{
     int lock_deep; 
     Thread_state state;
     void* esp;
-    struct Processe* processe;
+    struct Process* process;
     void* stack;
     void* k_stack;
 
@@ -78,7 +78,7 @@ typedef void (*thread_entry_t)();// מצביעה לפונקציה שמקבלת �
 Thread *_create_thread(thread_entry_t entry_point, ...);
 
 // ## -->> ריק __VA_ARGS__ לא מעביר פרמטר עם
-#define create_thread(func, ...) _create_thread((thread_entry_t)(func), ##__VA_ARGS__ , __INT32_MAX__)
+#define create_thread(func, ...) _create_thread((thread_entry_t)(func), ##__VA_ARGS__, __UINT32_MAX__)
 
 void init_threading();
 
@@ -103,6 +103,8 @@ void free_thread(Thread* th);
 typedef __builtin_va_list va_list;
 unsigned int* put_args_in_stack(void* top_stack, va_list args );
 
-Thread *create_thread_for_processe(void (*entry_point)(), struct Processe *p);
+Thread *create_thread_for_processe(thread_entry_t entry_point, struct Process *p, va_list args);
+void set_thread_state(Thread *th, Thread_state state);
+
 
 #endif

@@ -17,7 +17,11 @@ void physical_memory_init()
         memory_bitmap[i] = 0;
     }
 
-    unsigned int frame_num = kernel_limit / kb4;
+    unsigned int pages_to_map = kernel_limit / (kb1 * frame_size);
+
+    unsigned int frame_num = (pages_to_map + 1) * kb1;
+
+    
     for (unsigned int i = 0; i < frame_num; i++)
     {
         set_bitmap(i, 1);
@@ -28,6 +32,8 @@ void set_bitmap(unsigned int frame_number, int turn_on)
 {
     int index = frame_number / 32;
     int offset = frame_number % 32;
+
+    if (index >= memory_bitmap_size) return;
     
     if (turn_on)
     {
@@ -43,6 +49,10 @@ int is_used(unsigned int frame_number)
 {
     int index = frame_number / 32;
     int offset = frame_number % 32;
+    if (index >= memory_bitmap_size)
+    {
+        return 1;
+    }
     return (memory_bitmap[index] & (1 << offset)) != 0;
 }
 
@@ -54,9 +64,25 @@ unsigned int alloc_frame()
         if (!is_used(i))
         {
             set_bitmap(i, 1);
-            return (unsigned int)(i * 0x1000);
+            unsigned int phys_addr = i * 0x1000;
+            //printf("\nalloc frame %d, phys_addr = %x", i, phys_addr);
+            return phys_addr;
         }
     }
 
     return null;
+}
+
+
+int get_free_frames_count()
+{
+    int count = 0;
+    for (unsigned int i = 0; i < memory_bitmap_size * 32; i++)
+    {
+        if (!is_used(i))
+        {
+            count++;
+        }
+    }
+    return count;
 }

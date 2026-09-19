@@ -110,7 +110,7 @@ int map_page(unsigned int virtual_addr, unsigned int is_user)
 
         if (table_physical_addr == null)
         {
-            set_bitmap( physical_addr/frame_size  , 0);
+            set_bitmap( physical_addr >> 12  , 0);
             return 0;
         }
 
@@ -190,7 +190,7 @@ void *kmalloc(unsigned int size)
 
 void *_malloc(unsigned int size, Thread_list* th)
 {
-    if(th && th->thread && th->thread->processe == kernel_processe){
+    if(th && th->thread && th->thread->process == kernel_processe){
         return kmalloc(size);
     }
 
@@ -204,11 +204,11 @@ void *_malloc(unsigned int size, Thread_list* th)
     unsigned int total_size = size + header_size;
 
     if(th == null || th->thread == null ||
-    th->thread->processe == null)
+    th->thread->process == null)
     {
         return null;
     }
-    Heap_header *current = th->thread->processe->heap;
+    Heap_header *current = th->thread->process->heap;
 
     Heap_header *last = null;
     // חיפוש בלוק פנוי
@@ -251,7 +251,7 @@ void *_malloc(unsigned int size, Thread_list* th)
     unsigned int pages_needed = (total_size + frame_size - 1) / frame_size;
     unsigned int allocated_space = pages_needed * frame_size;
 
-    Processe* p = th->thread->processe;
+    Process* p = th->thread->process;
 
     unsigned int addr = p->heap_start;
     p->heap_start += allocated_space;
@@ -374,34 +374,39 @@ void __free(void *ptr , Thread_list* th)
     }
 
     //מסיר את המיפוי של הזיכרון אם זה האיזור האחרון שיש לו מיפוי הזיכרון של המשתמש
-    if( (unsigned int)ptr >= kernel_limit &&current->next == null && current->size > frame_size + max_bytes_gap){
+    if( (unsigned int)ptr >= kernel_limit &&current->next == null && current->size > frame_size + max_bytes_gap
+        && th && th->thread && th->thread->process){
+            Process* p = th->thread->process;
+            unsigned int block_start = (unsigned int)current;
+            unsigned int block_end = block_start + current->size + header_sz;
+            // מעגל את ההתחלה כלפי מטה ואת סוף כלפי מעלה 
+            unsigned int start_addr = block_start & ~(frame_size - 1);
+            unsigned int end_addr = (block_end + frame_size - 1) & ~(frame_size - 1);
+            unsigned int num_pages = (end_addr - start_addr) / frame_size;
 
+            //ניתוק העמוד לפני שמסירים את המיפוי של הזיכרון
+            if(current->prev != null){
+                current->prev->next = null;
+            }
+            else{
+                p->heap = null;
+            }
 
-        unsigned int heap_start = (unsigned int)current + ALIGN8(sizeof(Heap_header));
-
-        unsigned int start_addr = (heap_start + frame_size -1) & ~(frame_size -1);//מוודא שהסרת המיפוי תהיה בעמוד הבא
-
-        unsigned int bytes_to_remove = heap_start + current->size - start_addr;
-
-        unsigned int pages_to_unmap = bytes_to_remove / frame_size;
-
-        if( (heap_start + current->size) > start_addr && pages_to_unmap > 0){
-
-            for (int i = 0; i < pages_to_unmap; i++)
-            {
+            for(unsigned int i = 0 ; i < num_pages ; i++){
                 unmap(start_addr + i * frame_size);
             }
-            current->size -= pages_to_unmap * frame_size;
-
-            if (th != null && th->thread != null && th->thread->processe != null &&
-                th->thread->processe->vma != null)
-            {
-                VM_area* vm = find_vma(th->thread->processe->vma, (unsigned int)ptr);
-                if(vm!= null && vm->end >= pages_to_unmap * frame_size){
-                    vm->end -= pages_to_unmap * frame_size;
+            if(p->heap_start == end_addr){
+                p->heap_start = start_addr;
+            }
+            if(p->vma != null){
+                VM_area* vm = find_vma(p->vma, start_addr);
+                if(vm != null && vm->end == end_addr){
+                    vm->end = start_addr;
+                    if(vm->start == vm->end){
+                        vm->end += 1;// מונע מצב שבו אין יותר מיפוי של הזיכרון לאיזור זה           
+                    }
                 }
             }
-        }
     }
 }
 
@@ -482,6 +487,20 @@ void memcopy(void *target, void *source, unsigned int size)
     {
         ptr[i] = s[i];
     }
+}
+
+unsigned int calc_heap_size(Heap_header* heap){
+    unsigned int size = 0;
+
+    while (heap != null)
+    {
+        if(!heap->is_free){
+            size += heap->size;
+        }
+        heap = heap->next;
+    }
+    return size;
+    
 }
 
 

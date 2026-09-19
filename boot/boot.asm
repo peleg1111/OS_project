@@ -16,7 +16,7 @@ start:
 
 load_kernel:
     mov bx, KERNEL_OFFSET 
-    mov dh, 100
+    mov dh, SECTORS_TO_LOAD
     mov dl, [BOOT_DRIVE]
     mov ah, 0x02          
     mov al, dh

@@ -9,7 +9,7 @@ CFLAGS = -m32 -march=i386 -ffreestanding -fno-pic -fno-pie -fno-stack-protector 
          -fno-asynchronous-unwind-tables -O0 -c \
          -I drivers/ -I cpu/ -I cpu/idt/ -I drivers/key_board/ -I kernel/ \
 		  -I drivers/timer/ -I kernel/memory/ -I kernel/processes/ -I cpu/gdt/ \
-		   -I kernel/shell/ -I lib/ -g
+		   -I kernel/shell/ -I lib/ -I test/ -g
 
 # --- דגלי קישור (LDFLAGS) ---
 LDFLAGS = -m elf_i386 -T linker.ld --oformat binary -e main
@@ -31,13 +31,14 @@ OBJ = $(BIN_DIR)/kernel.o \
 	  $(BIN_DIR)/physical_memory.o \
 	  $(BIN_DIR)/VM_area.o \
 	  $(BIN_DIR)/thread.o \
-	  $(BIN_DIR)/processe.o \
+	  $(BIN_DIR)/process.o \
 	  $(BIN_DIR)/thread_interrupt.o \
 	  $(BIN_DIR)/Queue.o \
 	  $(BIN_DIR)/Stack.o \
 	  $(BIN_DIR)/tss.o \
 	  $(BIN_DIR)/gdt.o \
 	  $(BIN_DIR)/random.o \
+	  $(BIN_DIR)/process_test.o \
 
 
 
@@ -83,7 +84,7 @@ $(BIN_DIR)/key_board.o: drivers/key_board/key_board.c
 	$(CC) $(CFLAGS) $< -o $@
 
 # פונקציות עזר
-$(BIN_DIR)/stdio.o: lib/stdio.c
+$(BIN_DIR)/stdio.o: kernel/stdio.c
 	$(CC) $(CFLAGS) $< -o $@
 
 # טרמינל
@@ -110,7 +111,7 @@ $(BIN_DIR)/VM_area.o: kernel/memory/VM_area.c
 $(BIN_DIR)/thread.o: kernel/processes/thread.c
 	$(CC) $(CFLAGS) $< -o $@
 #תהליכים
-$(BIN_DIR)/processe.o: kernel/processes/processe.c
+$(BIN_DIR)/process.o: kernel/processes/process.c
 	$(CC) $(CFLAGS) $< -o $@
 # thread interrupts
 $(BIN_DIR)/thread_interrupt.o: kernel/processes/thread_interrupt.asm
@@ -131,6 +132,8 @@ $(BIN_DIR)/tss.o: cpu/gdt/tss.c
 $(BIN_DIR)/gdt.o: cpu/gdt/gdt.asm
 	$(ASM) -f elf32 $< -o $@
 
+$(BIN_DIR)/process_test.o: test/process_test.c
+	$(CC) $(CFLAGS) $< -o $@
 
 clean:
 	rm -rf $(BIN_DIR)

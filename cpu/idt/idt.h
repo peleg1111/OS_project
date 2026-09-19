@@ -48,6 +48,7 @@ typedef struct {
 void set_idt_gate(int n, unsigned int handler, unsigned int flags, unsigned int sel);
 void load_idt();
 void error_print(registers_t* stack_addr);
+void pic_remap();
 
 #define ring3 0xEE
 #define ring0 0x8E

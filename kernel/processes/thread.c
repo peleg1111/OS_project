@@ -1,7 +1,7 @@
 #include "thread.h"
 #include "memory.h"
 #include "stdio.h"
-#include "processe.h"
+#include "process.h"
 #include "tss.h"
 #include "idt.h"
 #include "timer.h"
@@ -20,15 +20,15 @@ unsigned int* put_args_in_stack(void* top_stack, va_list args ){
     int count = 0;
     void* temp_args[10];
     void* temp;
-
+    
     while ( count < 10)
     {
         temp = va_arg(args, void*);
-        if(temp == __INT32_MAX__)break;
+        if((unsigned int)temp == __UINT32_MAX__)break;
         temp_args[count++] = temp;
     }
 
-    if(count == __INT32_MAX__) return (unsigned int *)top_stack;
+    if(count == 0) return (unsigned int *)top_stack;
 
     unsigned int* stack = (unsigned int*)top_stack;
 
@@ -43,84 +43,43 @@ unsigned int* put_args_in_stack(void* top_stack, va_list args ){
 
 Thread *_create_thread(thread_entry_t entry_point , ...)
 {
-    Thread* thread = kmalloc(sizeof(Thread));
-    thread->lock_deep = -1;
-    thread->k_stack = null;
-    thread->stack = kmalloc(STACK_SIZE);
-    // כדי לחשב את המיקום בביטים בודדים char שימוש ב
-    char *top_stack = (char *)thread->stack + STACK_SIZE;
-    thread->top_esp = (unsigned int)top_stack;    
-
     va_list args;
     va_start(args , entry_point);
 
-    unsigned int *addr = put_args_in_stack((void*)top_stack, args);
+    Process *p = null;
+    if (th_list != null && th_list->thread != null)
+    {
+        p = th_list->thread->process;
+    }
+
+    Thread* t = create_thread_for_processe(entry_point, p, args);
     va_end(args);
-    addr--;
-    *addr = (unsigned int)set_current_as_dead;
-
-    Stack_frame *frame = (Stack_frame *)((char*)addr - sizeof(Stack_frame));
-
-    frame->eip = (unsigned int)entry_point;// נקודת החזרה
-    frame->cs = 0x08;
-    frame->eflags = 0x200;//מאפשר פסיקות מערכת
-    
-    // איפוס האוגרים הכלליים המזויפים כדי למנוע ערכי זבל
-    frame->edi = 0;
-    frame->esi = 0;
-    frame->ebp = 0;
-    frame->ebx = 0;
-    frame->esp_dummy = 0;
-    frame->edx = 0;
-    frame->ecx = 0;
-    frame->eax = 0;
-
-    thread->esp = frame;
-    thread->state = BLOCKED;
-
-    thread->id = next_id;
-    next_id++;
-
-    thread->processe = null;
-
-    Thread_list* new_node = kmalloc(sizeof(Thread_list));
-    new_node->thread = thread;
-
-    if(th_list == null){
-        th_list = new_node;
-        new_node->next = new_node;
-        new_node->prev = new_node;
-        thread->processe = null;
-    }
-
-    else{
-        new_node->next = th_list->next;
-
-        new_node->prev = th_list;
-
-        th_list->next->prev = new_node;
-
-        th_list->next = new_node;
-        
-        thread->processe = th_list->thread->processe;
-        if(thread->processe != null){
-            insert_q(thread->processe->threads, thread);
-        }
-    }
-    return thread;
+    return t;
 }
 
 
-Thread *create_thread_for_processe(void (*entry_point)(), Processe* p)
+
+Thread *create_thread_for_processe(thread_entry_t entry_point, Process* p , va_list args)
 {
+    if(entry_point == null) return null;
+
     Thread *thread = kmalloc(sizeof(Thread));
+    if(thread == null) return null;
     thread->lock_deep = -1;
     thread->stack = kmalloc(STACK_SIZE);
+
+    if(thread->stack == null){
+        free(thread);
+        return null;
+    }
+
     // כדי לחשב את המיקום בביטים בודדים char שימוש ב
     char *top_stack = (char *)thread->stack + STACK_SIZE;
     thread->top_esp = (unsigned int)top_stack;
 
-    unsigned int *addr = (unsigned int *)(top_stack - sizeof(unsigned int));
+
+    unsigned int *addr = put_args_in_stack((void*)top_stack, args);
+    addr--;
     *addr = (unsigned int)set_current_as_dead;
 
     Stack_frame *frame = (Stack_frame *)((char *)addr - sizeof(Stack_frame));
@@ -145,9 +104,14 @@ Thread *create_thread_for_processe(void (*entry_point)(), Processe* p)
     thread->id = next_id;
     next_id++;
 
-    thread->processe = null;
+    thread->process = null;
 
     Thread_list *new_node = kmalloc(sizeof(Thread_list));
+    if(new_node == null){
+        free(thread->stack);
+        free(thread);
+        return null;
+    }
     new_node->thread = thread;
 
     if (th_list == null)
@@ -155,11 +119,13 @@ Thread *create_thread_for_processe(void (*entry_point)(), Processe* p)
         th_list = new_node;
         new_node->next = new_node;
         new_node->prev = new_node;
-        thread->processe = null;
+        thread->process = null;
     }
 
     else
     {
+        asm volatile("cli");
+    
         new_node->next = th_list->next;
 
         new_node->prev = th_list;
@@ -168,11 +134,12 @@ Thread *create_thread_for_processe(void (*entry_point)(), Processe* p)
 
         th_list->next = new_node;
 
-        thread->processe = p;
-        if (thread->processe != null)
+        thread->process = p;
+        if (thread->process != null)
         {
-            insert_q(thread->processe->threads, thread);
+            k_insert_q(thread->process->threads, thread);
         }
+        asm volatile("sti");
     }
     return thread;
 }
@@ -182,8 +149,10 @@ void* switch_thread(void* esp){
     {
         return esp;
     }
-    
-    th_list->thread->esp = esp;
+    if(th_list->thread != null){
+
+        th_list->thread->esp = esp;
+    }
 
     if(th_list->thread->state == RUNNING){
         th_list->thread->state = READY;
@@ -242,30 +211,30 @@ void init_threading()
     main_node->prev = main_node;
 
     // יצירת תהליך הקרנל
-    Processe* p = kmalloc(sizeof(Processe));
+    Process* p = kmalloc(sizeof(Process));
 
     if(p == null){
         th_list = main_node;
         return;
     }
 
-    p->heap = null;
+    p->heap = kernel_heap_start_block;
     p->heap_start = null;
-    p->id = 0;
+    p->id = -1;
     p->parent = null;
     p->pde_physical_address = pde_physical_address;
     p->threads = create_queue();
 
-    insert_q(p->threads, main_thread);
+    k_insert_q(p->threads, main_thread);
     p->vma = vma_list;
     kernel_processe = p;
-    main_thread->processe = p;
+    main_thread->process = p;
     
-    processe_q = create_queue();
-    insert_q(processe_q , p);
+    processe_q = _create_queue(1);
+    k_insert_q(processe_q , p);
     
     th_list = main_node;
-    
+    start_thread(create_thread(kill_processe_idle));
 }
 
 void remove_current_thread()
@@ -289,6 +258,7 @@ void remove_current_thread()
     free(current);
 }
 
+
 void set_current_as_dead(){
 
     if(th_list != null && th_list->thread != null){
@@ -301,6 +271,11 @@ void set_current_as_dead(){
     {
         __asm__ volatile("hlt");
     }
+}
+void set_thread_state(Thread* th, Thread_state state){
+    if(th == null) return;
+
+    th->state = state;
 }
 
 void join_thread(Thread* th){
@@ -333,7 +308,7 @@ Lock_t* create_lock()
     }
 
     lock->lock_count = 0;
-    lock->waiting_threads = create_queue();
+    lock->waiting_threads = _create_queue(1);
     lock->owner_id = -1;
     lock->recursive_lock_count = 0;
 
@@ -424,7 +399,7 @@ void insert_thread_to_lock_queue(Lock_t* lock, Thread* thread)
     thread->lock_deep++;
     thread->state = BLOCKED;
     
-    insert_q(lock->waiting_threads, thread);
+    k_insert_q(lock->waiting_threads, thread);
 }
 
 
@@ -453,13 +428,35 @@ void remove_thread_from_lock_queue(Lock_t* lock)
 void free_thread(Thread* th){
     if(th == null) return;
 
-    if(th->processe != null && th->processe->threads != null){
-        remove_by_val_q(th->processe->threads, th);
-        if(th->processe->threads->Len == 0){
-            free_processe(th->processe);
-        }
+    if(th_list != null){
+        Thread_list* current = th_list;
+        do{
+            if(current->thread == th){
+                if(current->next == current){
+                    th_list = null;
+                }
+                else{
+
+                    asm volatile("cli");
+                    current->prev->next = current->next;
+                    current->next->prev = current->prev;
+                    th_list = current->next;
+                    asm volatile("sti");
+                }
+                free(current);
+                break;
+            }
+            current = current->next;
+        }while(current != th_list && th_list != null);
     }
 
+    if(th->process != null && th->process->threads != null){
+        remove_by_val_q(th->process->threads, th);
+        if(th->process->threads->Len == 0){
+            th->process->state = DEAD;
+        }
+    }
+    
     free(th->stack);
     free(th);
 }
@@ -502,7 +499,7 @@ Thread *create_user_thread(void (*entry_point)())
     thread->esp = frame;
     thread->state = BLOCKED;
     thread->id = next_id++;
-    thread->processe = null;
+    thread->process = null;
 
 
     Thread_list* new_node = kmalloc(sizeof(Thread_list));
@@ -512,7 +509,7 @@ Thread *create_user_thread(void (*entry_point)())
         th_list = new_node;
         new_node->next = new_node;
         new_node->prev = new_node;
-        thread->processe = null;
+        thread->process = null;
     }
 
     else
@@ -525,10 +522,10 @@ Thread *create_user_thread(void (*entry_point)())
 
         th_list->next = new_node;
 
-        thread->processe = th_list->thread->processe;
-        if (thread->processe != null)
+        thread->process = th_list->thread->process;
+        if (thread->process != null)
         {
-            insert_q(thread->processe->threads, thread);
+            insert_q(thread->process->threads, thread);
         }
     }
 

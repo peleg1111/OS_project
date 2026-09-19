@@ -62,6 +62,7 @@ void printf(char* format, ...);
 void print_float(float num , int precision);
 void print_char(char c);
 void print_int(int n);
+void print_unsigned_int(unsigned int n);
 void print_hex(unsigned int pointer);
 
 //    פעולות עזר למחרוזות
@@ -111,7 +112,6 @@ typedef struct {
 extern Print_info print_info;
 
 
-
 typedef enum {
     SUCCESS = 0,
     BUFFER_OVERFLOW = 1,
@@ -120,8 +120,10 @@ typedef enum {
 
 } Error_code;
 
-extern const char* error_messages[];
-#define yield __asm__ __volatile__("int $0x81")
 
+extern const char* error_messages[];
+
+#define yield __asm__ __volatile__("int $0x81")
+#define uint32 unsigned int
 
 #endif

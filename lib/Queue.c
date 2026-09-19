@@ -54,6 +54,32 @@ void insert_q(Queue_s *q, void *val)
     q->Len++;
 }
 
+void k_insert_q(Queue_s *q, void *val)
+{
+    if (!q)
+        return;
+
+    List_s *lst = kmalloc(sizeof(List_s));
+    if (!lst)
+        return;
+
+    lst->val = val;
+    lst->next = null;
+
+    if (q->Len == 0)
+    {
+        q->list = lst;
+        q->head_node = lst;
+        q->end_node = lst;
+    }
+    else
+    {
+        lst->next = q->end_node;
+        q->end_node = lst;
+    }
+    q->Len++;
+}
+
 void *pop_q(Queue_s *q)
 {
     if (!q || q->Len == 0 || !q->head_node)

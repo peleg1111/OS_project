@@ -103,14 +103,14 @@ void page_fault_handler(registers_t *regs)
     int fetch = regs->err_code & 0x10;     // 1 -> ניסיון להריץ קוד
 
     if(present){
-        if (!th_list || !th_list->thread || !th_list->thread->processe || !th_list->thread->processe->vma)
+        if (!th_list || !th_list->thread || !th_list->thread->process || !th_list->thread->process->vma)
         {
             printf("\n[PANIC] Segmentation Fault at %p! Invalid process context.\n", addr);
             error_print(regs);
             return;
         }
 
-        VM_area *vma = find_vma(th_list->thread->processe->vma, addr);
+        VM_area *vma = find_vma(th_list->thread->process->vma, addr);
         if (vma != null)
         {
             unsigned int page_virtual_addr = addr & 0xFFFFF000;
@@ -127,7 +127,7 @@ void page_fault_handler(registers_t *regs)
         }
         else
         {
-            print_vma_list(th_list->thread->processe->vma);
+            print_vma_list(th_list->thread->process->vma);
             printf("\nSegmentation Fault at %p! No VMA found.\n", addr);
             error_print(regs);
         }

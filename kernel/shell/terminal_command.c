@@ -53,13 +53,6 @@ void handle_command() {
 
     if (size == 0) return; // פקודה ריקה
 
-    // ההדפסה של הפקודה
-    printf("cmd got -->> ");
-    for(int i = 0; i < size ; i++){
-        lower(parts[i]);
-        printf("$%s$",parts[i]);
-    }
-
     // הניתוח של הפקודה
     if(strcmp(parts[0], "clear") == 1){
         clear_screen();
@@ -74,7 +67,7 @@ void handle_command() {
         display_history();
     }
 
-    else if(strcmp(parts[0] , "help" ) == 1){
+    else if(strcmp(parts[0] , "help") == 1){
 
         printf(
             "\n\n========================= TERMINAL HELP ========================="
@@ -84,7 +77,6 @@ void handle_command() {
             "\n[ AVAILABLE COMMANDS ]"
             "\n  clear                 - Clears the terminal screen."
             "\n  color <txt color_name> <bg color_name (optional)>    - Changes text color."
-            "\n                          Available: green, yellow, white, blue"
             "\n  history               - Shows the list of previously used commands."
             "\n  help                  - Displays this help menu."
             "\n"

@@ -1,6 +1,6 @@
 #include "tss.h"
 #include "stdio.h"
-#include "processe.h"
+#include "process.h"
 #include "thread.h"
 #include "memory.h"
 

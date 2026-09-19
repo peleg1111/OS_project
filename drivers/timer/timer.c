@@ -33,7 +33,7 @@ void timer_handler()
         read_RTC();
         update_time();
     }
-    if(time.tick_count % 3 == 0)
+    if(time.tick_count % 5 == 0)
     {
         yield;
     }

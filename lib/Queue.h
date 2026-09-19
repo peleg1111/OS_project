@@ -22,6 +22,7 @@ Queue_s *create_queue();
 Queue_s *_create_queue(int is_kernel);
 
 void insert_q(Queue_s* q, void *val);
+void k_insert_q(Queue_s *q, void *val);
 void *pop_q(Queue_s* q);
 void *head_q(Queue_s* q);
 void free_q(Queue_s* q);
