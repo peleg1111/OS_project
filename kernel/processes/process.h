@@ -41,8 +41,12 @@ struct Thread* _create_processe(thread_entry_t entery_point, ...);
 
 #define create_processe(entery_point, ...) _create_processe((thread_entry_t)entery_point, ##__VA_ARGS__, __UINT32_MAX__)
 
+void set_process_state(Process* p, Processe_state state);
+int kill_process(Process* p);
+Process* get_process_by_id(long id);
 void kill_processe_idle();
-void kill_processe(Process* p);
+int kill_process(Process* p);
 void free_processe(Process* p);
-
+void print_process_info(Process* p);
+void print_all_processes_info();
 #endif

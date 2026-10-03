@@ -11,7 +11,10 @@ void _test_process_free_helper()
     for (int i = 0; i < 40; i++)
     {
         time.sleep(0.01);
-        malloc(1030);
+        int* x = malloc(1030 * 4);
+        for(int i = 0; i< 10; i+=400){
+            x[i] = i;
+        }
         if(th_list && th_list->thread && th_list->thread->process){
             printf("\nheap size: %d", calc_heap_size(th_list->thread->process->heap));
         }

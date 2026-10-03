@@ -54,7 +54,7 @@ typedef __builtin_va_list va_list;
 #define LIGHT_MAGENTA_ON_BLACK 0x0D // סגול בהיר / ורוד
 #define YELLOW_ON_BLACK 0x0E        // צהוב
 #define WHITE_ON_BLACK 0x0F         // לבן בוהק
-
+#define DEFAULT_COLOR 0x07 // צבע ברירת מחדל (אפור בהיר על שחור)
 // הצהרות לפונקציות
 
 // פעולות להדפסה למסך
@@ -74,7 +74,7 @@ int strcmp(unsigned char* s1, char* s2);
 int start_with(char* str, char* prefix);
 int split(char* str, char c,char* parts[]);
 char* strip(char* str);
-
+unsigned int intStr_to_int(char* str);
 void header_msg();
 int get_driver_name_size();
 

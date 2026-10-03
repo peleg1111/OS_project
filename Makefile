@@ -62,7 +62,7 @@ $(BIN_DIR)/kernel.bin: $(OBJ)
 # קימפול הבוטלאודר
 $(BIN_DIR)/boot.bin: boot/boot.asm $(BIN_DIR)/kernel.bin
 	$(eval KERNEL_SIZE=$(shell wc -c < $(BIN_DIR)/kernel.bin))
-	$(eval SECTORS=$(shell echo $$(( ($(KERNEL_SIZE) + 511) / 512 + 1 )) ))
+	$(eval SECTORS=$(shell echo $$(( ($(KERNEL_SIZE) + 511) / 512 )) ))
 	@echo "==> Bootloader: loading $(SECTORS) sectors"
 	$(ASM) -f bin -DSECTORS_TO_LOAD=$(SECTORS) $< -o $@
 

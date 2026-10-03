@@ -165,3 +165,6 @@ void pic_remap()
     // 0xEF = 11101111 -> פותח את IRQ12 (עכבר) בתוך ה-Slave PIC
     port_byte_out(0xA1, 0xEF);
 }
+
+
+

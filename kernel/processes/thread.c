@@ -219,11 +219,11 @@ void init_threading()
     }
 
     p->heap = kernel_heap_start_block;
-    p->heap_start = null;
+    p->heap_start = (unsigned int)kernel_heap_start_block + ALIGN8(sizeof(Heap_header));
     p->id = -1;
     p->parent = null;
     p->pde_physical_address = pde_physical_address;
-    p->threads = create_queue();
+    p->threads = _create_queue(1);
 
     k_insert_q(p->threads, main_thread);
     p->vma = vma_list;
@@ -315,6 +315,29 @@ Lock_t* create_lock()
     return lock;
 }
 
+
+Thread* get_thread_by_id(unsigned int id){
+    if(th_list == null) return null;
+
+    Thread_list* current = th_list;
+    do{
+        if(current->thread != null && current->thread->id == id){
+            return current->thread;
+        }
+        current = current->next;
+        
+    }while(current != th_list);
+
+    return null;
+}
+
+int kill_thread(Thread* th){
+    if(th == null) return 0;
+    if(th->id == 0) return 0; // לא ניתן להרוג את התהליך הראשי של הקרנל
+    
+    set_thread_state(th, ZOMBIE);
+    return 1;
+}
 /*
     מימוש של מנעול עם תמיכה בנעילה רקורסיבית(אותו התהליך יכול לנעול את המנעול מספר פעמים מבלי להיתקע)
     המנעול שומר על מספר הפעמים שהתהליך הנעול את המנעול נעול בו, ומאפשר לו לשחרר את המנעול רק כאשר הוא שחרר את כל הנעילות שלו כדי
@@ -459,6 +482,33 @@ void free_thread(Thread* th){
     
     free(th->stack);
     free(th);
+}
+
+
+void print_thread_info(Thread* th){
+    if(th == null) return;
+
+    printf("\n\tThread ID: %d", th->id);
+    printf("\n\tThread State: %s", th->state == READY ? "READY" : th->state == RUNNING ? "RUNNING" : th->state == BLOCKED ? "BLOCKED" : "ZOMBIE");
+    printf("\n\tThread Lock Depth: %d", th->lock_deep);
+    printf("\n\tThread ESP: %x", th->esp);
+    printf("\n\tThread Top ESP: %x", th->top_esp);
+    printf("\n\tThread Process ID: %d", th->process ? th->process->id : -1);
+}
+
+void print_all_threads_info(){
+    if(th_list == null) return;
+    asm volatile("cli");
+    int num = 1;
+    Thread_list* current = th_list;
+    do{
+        printf("\n\nThread %d:", num++);
+        print_thread_info(current->thread);
+        current = current->next;
+
+    }while(current != th_list);
+
+    asm volatile("sti");
 }
 
 /*

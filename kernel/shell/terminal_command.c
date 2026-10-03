@@ -75,23 +75,71 @@ void handle_command() {
             "\n  Type a command name followed by its arguments and press ENTER."
             "\n"
             "\n[ AVAILABLE COMMANDS ]"
-            "\n  clear                 - Clears the terminal screen."
+            "\n  clear                     - Clears the terminal screen."
             "\n  color <txt color_name> <bg color_name (optional)>    - Changes text color."
-            "\n  history               - Shows the list of previously used commands."
-            "\n  help                  - Displays this help menu."
+            "\n  history                   - Shows the list of previously used commands."
+            "\n  help                      - Displays this help menu."
+            "\n  kill_thread <thread_id>   - Terminates a specific thread by its ID."
+            "\n  kill_process <process_id> - Terminates a specific process by its ID."
+            "\n  show_thread <thread_id>   - Displays information about a specific thread."
+            "\n  show_process <process_id> - Displays information about a specific process."
+            "\n  show_all_threads          - Displays information about all threads."
+            "\n  show_all_processes        - Displays information about all processes."
             "\n"
             "\n[ KEYBOARD SHORTCUTS ]"
             "\n  UP / DOWN             - Navigate command history."
             "\n  LEFT / RIGHT          - Move cursor back and forth."
             "\n  Shift + UP / DOWN     - Scroll up / down through buffer."
             "\n  Shift + LEFT / RIGHT  - Select / highlight text."
-            "\n  Ctrl + A              - Select all text on current row."
+            "\n  Ctrl + A              - Select all text on current row." 
             "\n  Ctrl + C              - Copy selected text."
             "\n  Ctrl + V              - Paste copied text."
             "\n================================================================="
             "\n");
     }
-
+    else if(strcmp(parts[0] , "kill_thread") && size > 1){
+        char* str = parts[1];
+        int thread_id = intStr_to_int(str + null);
+        int result = kill_thread(get_thread_by_id(thread_id));
+        printf("\nKill thread %d: %s", thread_id, result ? "Success" : "Failed");
+    }
+    else if (strcmp(parts[0], "kill_process") && size > 1)
+    {
+        char *str = parts[1];
+        int process_id = intStr_to_int(str + null);
+        int result = kill_process(get_process_by_id(process_id));
+        printf("\nKill process %d: %s", process_id, result ? "Success" : "Failed");
+    }
+    
+    else if(strcmp(parts[0],"show_thread") && size == 2){
+        char* str = parts[1];
+        int thread_id = intStr_to_int(str + null);
+        Thread* th = get_thread_by_id(thread_id);
+        if(th != null){
+            print_thread_info(th);
+        }
+        else{
+            printf("\nThread with ID %d not found.", thread_id);
+        }
+    }
+    else if(strcmp(parts[0],"show_process") && size == 2){
+        char* str = parts[1];
+        int process_id = intStr_to_int(str + null);
+        Process* p = get_process_by_id(process_id);
+        if(p != null){
+            print_process_info(p);
+        }
+        else{
+            printf("\nProcess with ID %d not found.", process_id);
+        }
+    }
+    else if(strcmp(parts[0],"show_all_threads") == 1){
+        print_all_threads_info();
+    }
+    else if(strcmp(parts[0],"show_all_processes") == 1){
+        print_all_processes_info();
+    }
+    
     else{
         int old_color = print_info.cur_color;
         set_color(RED_ON_BLACK);
@@ -190,6 +238,10 @@ int get_color_by_string(char* str){
 void change_color(char* parts[], int size){
 
     if(size < 3){
+        if(strcmp(parts[1], "default") == 1){
+            set_color(DEFAULT_COLOR);
+            return;
+        }
         printf("\nUsage: color <txt color_name> <bg color_name>");
         return;
     }

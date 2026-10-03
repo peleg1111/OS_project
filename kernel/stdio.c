@@ -281,7 +281,7 @@ void print_unsigned_int(unsigned int num){
 void print_hex(unsigned int pointer){
 
     int old_color = print_info.cur_color;
-    set_color(GREEN_ON_BLACK);
+    
 
     char* hex = "0123456789ABCDEF";
     char buffer[11];
@@ -295,8 +295,14 @@ void print_hex(unsigned int pointer){
         buffer[i] = hex[pointer & 0xF];
         pointer >>=4; // מקדם את המצביעה 4 ביטים קדימה ושומר את הקודמים להדפסה
     }
+    if(idx < MAX_ROWS * SCREEN_COLS -1){
+        set_color(WHITE_ON_BLACK);
+        print_char(buffer[0]);
+        print_char(buffer[1]);
+    }
+    set_color(GREEN_ON_BLACK);
 
-    for (int i = 0; buffer[i] != null && idx < MAX_ROWS * SCREEN_COLS; i++)
+    for (int i = 2; buffer[i] != null && idx < MAX_ROWS * SCREEN_COLS; i++)
     {
         print_char(buffer[i]);
     }
@@ -364,7 +370,19 @@ int strcmp(unsigned char* s1, char* s2) {
     }
     return (s1[i] == s2[i]) ? 1 : 0;
 }
-
+unsigned int intStr_to_int(char* str) {
+    unsigned int result = 0;
+    int i = 0;
+    while (str[i] != '\0') {
+        
+        if (str[i] < '0' || str[i] > '9') {
+            return 0;
+        }
+        result = result * 10 + (str[i] - '0');
+        i++;
+    }
+    return result;
+}
 
 // קבלת קלט מהמחשב
 unsigned char port_byte_in(unsigned short port) {

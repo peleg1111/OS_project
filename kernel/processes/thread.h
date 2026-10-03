@@ -85,6 +85,8 @@ void init_threading();
 void join_thread(Thread *th);
 
 void start_thread(Thread *th);
+Thread* get_thread_by_id(unsigned int id);
+int kill_thread(Thread* th);
 
 void Unlock(Lock_t *lock);
 
@@ -106,5 +108,7 @@ unsigned int* put_args_in_stack(void* top_stack, va_list args );
 Thread *create_thread_for_processe(thread_entry_t entry_point, struct Process *p, va_list args);
 void set_thread_state(Thread *th, Thread_state state);
 
+void print_thread_info(Thread *th);
+void print_all_threads_info();
 
 #endif

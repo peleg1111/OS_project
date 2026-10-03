@@ -222,7 +222,73 @@ void kill_processe_idle(){
             }
 
             current = next;
-            
         }
+    }
+}
+
+int kill_process(Process* p){
+    if(p == null) return 0;
+    if(p == kernel_processe) return 0;//לא ניתן להרוג את התהליך הראשי של הקרנל
+
+    set_process_state(p, DEAD);
+    return 1;
+}
+
+void set_process_state(Process* p, Processe_state state){
+    if(p == null) return;
+
+    p->state = state;
+}
+
+Process* get_process_by_id(long id){
+    if(!processe_q) return null;
+
+    List_s* current = processe_q->end_node;
+    while(current != null){
+        Process* p = (Process*)current->val;
+        if(p != null && p->id == id){
+            return p;
+        }
+        current = current->next;
+    }
+    return null;
+}
+
+void print_process_info(Process* p){
+    if(p == null) return;
+
+    printf("\n\tProcess ID: %d", p->id);
+    printf("\n\tPhysical Address of Page Directory: %x", p->pde_physical_address);
+    printf("\n\tHeap Size: %d", calc_heap_size(p->heap));
+    printf("\n\tState: %s", (p->state == ALIVE) ? "ALIVE" : "DEAD");
+    printf("\n\tParent Process ID: %d", (p->parent != null) ? p->parent->id : -1);
+    printf("\n\tNumber of Threads: %d", (p->threads != null) ? p->threads->Len : 0);
+
+    printf("\n\tThread IDs: ");
+    for(List_s* current = p->threads->end_node; current != null; current = current->next){
+
+        Thread* th = (Thread*)current->val;
+        if(th != null){
+            printf("%d", th->id);
+            if(current->next != null){
+                printf(", ");
+            }
+        }
+    }
+    printf("\n\tVirtual Memory Areas:\n");
+    print_vma_list(p->vma);
+}
+
+void print_all_processes_info(){
+    if(!processe_q) return;
+
+    List_s* current = processe_q->end_node;
+    int num = 1;
+    printf("\n\nAll Processes Info:");
+    while(current != null){
+        printf("\n\nProcess %d:", num++);
+        Process* p = (Process*)current->val;
+        print_process_info(p);
+        current = current->next;
     }
 }
