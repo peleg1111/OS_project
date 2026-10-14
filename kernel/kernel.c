@@ -5,7 +5,10 @@
 #include "memory.h"
 #include "VM_area.h"
 #include "thread.h"
+
+
 #include "process_test.h"
+#include "memory_test.h"
 
 void set_up_kernel();
 
@@ -13,22 +16,8 @@ void main()
 {
 
     set_up_kernel();
-    
-    unsigned int s = calc_heap_size(th_list->thread->process->heap);
 
-    int frames = get_free_frames_count();
-    Thread* t1 = create_thread(test_process_running_process);
-    Thread* t2 = create_processe(test_process_free);
-
-    start_thread(t1);
-    start_thread(t2);
-    join_thread(t1);
-    join_thread(t2);
-    for(int i = 0; i< 100; i++) yield;
-
-    printf("\n    size = %d   end size = %d",s,calc_heap_size(th_list->thread->process->heap));
-    printf("\n  start frames: %d end frames = %d",frames,get_free_frames_count());
-    
+    //start_thread(create_processe(test_process_running_process));  
 
     while(1){
         __asm__ __volatile__("hlt");

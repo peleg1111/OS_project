@@ -1,6 +1,8 @@
 #include "stdio.h"
 #include "terminal_command.h"
 #include "key_board.h"
+#include "memory_test.h"
+#include "exception_test.h"
 
 void update_screen();
 void set_color(int color);
@@ -75,6 +77,17 @@ void handle_command() {
             "\n  Type a command name followed by its arguments and press ENTER."
             "\n"
             "\n[ AVAILABLE COMMANDS ]"
+            "\n  add <num1> <num2>         - return => num1 + num2"
+            "\n  sub <num1> <num2>         - return => num1 - num2"
+            "\n  mod <num1> <num2>         - return => num1 % num2"
+            "\n  div <num1> <num2>         - return => num1 / num2"
+            "\n  mult <num1> <num2>        - return => num1 * num2"
+            "\n  test_memory               - test the memory manager"
+            "\n  memory_map                - print ranges of free and occupied memory address"
+            "\n  trigger_invalid_opcode    - trigger an error"
+            "\n  trigger_divide_by_zero    - trigger an error"
+            "\n  trigger_general_protection_fault - trigger an error"
+            "\n  trigger_page_fault        - trigger an error"
             "\n  clear                     - Clears the terminal screen."
             "\n  color <txt color_name> <bg color_name (optional)>    - Changes text color."
             "\n  history                   - Shows the list of previously used commands."
@@ -111,7 +124,11 @@ void handle_command() {
         printf("\nKill process %d: %s", process_id, result ? "Success" : "Failed");
     }
     
-    else if(strcmp(parts[0],"show_thread") && size == 2){
+    else if(strcmp(parts[0],"show_thread")){
+        if(size != 2){
+            printf("\nshow_process gets one parameter\nshow_process <thread id>");
+            return;
+        }
         char* str = parts[1];
         int thread_id = intStr_to_int(str + null);
         Thread* th = get_thread_by_id(thread_id);
@@ -122,7 +139,11 @@ void handle_command() {
             printf("\nThread with ID %d not found.", thread_id);
         }
     }
-    else if(strcmp(parts[0],"show_process") && size == 2){
+    else if(strcmp(parts[0],"show_process")){
+        if(size != 2){
+            printf("\nshow_process gets one parameter\nshow_process <pid>");
+            return;
+        }
         char* str = parts[1];
         int process_id = intStr_to_int(str + null);
         Process* p = get_process_by_id(process_id);
@@ -138,6 +159,66 @@ void handle_command() {
     }
     else if(strcmp(parts[0],"show_all_processes") == 1){
         print_all_processes_info();
+    }
+    else if(strcmp(parts[0],"memory_map")){
+        printf("\n");
+        print_memory_map();
+    }
+
+    else if(strcmp(parts[0],"test_memory")){
+        run_memory_tests();
+    }
+    else if(strcmp(parts[0],"trigger_page_fault")){
+        trigger_page_fault();
+    }
+
+    else if(strcmp(parts[0],"trigger_general_protection_fault")){
+        trigger_general_protection_fault();
+    }
+    else if(strcmp(parts[0],"trigger_invalid_opcode")){
+        trigger_invalid_opcode();
+    }
+    else if(strcmp(parts[0],"trigger_divide_by_zero")){
+        trigger_divide_by_zero();
+    }
+
+    else if(strcmp(parts[0],"mult")){
+        if(size != 3){
+            printf("\nerror => mult gets 2 parameters\nmult <num1> <num2>");
+            return;
+        }
+        printf("result = %d",intStr_to_int(parts[1]) * intStr_to_int(parts[2]));
+    }
+    else if(strcmp(parts[0],"div")){
+        if(size != 3){
+            printf("\nerror => div gets 2 parameters\ndiv <num1> <num2>");
+            return;
+        }
+        printf("result = %5f",(float)intStr_to_int(parts[1]) / intStr_to_int(parts[2]));
+    }
+
+    else if(strcmp(parts[0],"mod")){
+        if(size != 3){
+            printf("\nerror => mod gets 2 parameters\nmod <num1> <num2>");
+            return;
+        }
+        printf("result = %d",intStr_to_int(parts[1]) % intStr_to_int(parts[2]));
+    }
+
+    else if(strcmp(parts[0],"sub")){
+        if(size != 3){
+            printf("\nerror => sub gets 2 parameters\nsub <num1> <num2>");
+            return;
+        }
+        printf("result = %d",intStr_to_int(parts[1]) - intStr_to_int(parts[2]));
+    }
+
+    else if(strcmp(parts[0],"add")){
+        if(size != 3){
+            printf("\nerror => add gets 2 parameters\nadd <num1> <num2>");
+            return;
+        }
+        printf("result = %d",intStr_to_int(parts[1]) + intStr_to_int(parts[2]));
     }
     
     else{

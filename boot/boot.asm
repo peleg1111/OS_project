@@ -21,7 +21,7 @@ start:
     call switch_to_pm
     jmp $
 
-; --- טעינת הקרנל בחלקים עם INT 13h extensions (LBA) ---
+; טעינת הקרנל בחלקים עם INT 13h
 load_kernel:
     mov word [dap_seg], KERNEL_SEG
     mov word [dap_lba], 1 ; ( boot loader אחרי ה )מתחילים מסקטור 1

@@ -13,7 +13,7 @@ typedef __builtin_va_list va_list;
 #define true 1
 #define false 0
 #define null 0x00
-#define bool int
+#define bool char
 
 
 #define ARROW_UP 0x48
@@ -110,15 +110,6 @@ typedef struct {
 } Print_info;
 
 extern Print_info print_info;
-
-
-typedef enum {
-    SUCCESS = 0,
-    BUFFER_OVERFLOW = 1,
-    INVALID_COMMAND = 2,
-    UNKNOWN_ERROR = 3
-
-} Error_code;
 
 
 extern const char* error_messages[];

@@ -86,3 +86,31 @@ int get_free_frames_count()
     }
     return count;
 }
+int get_occupied_frames_count(){
+        int count = 0;
+    for (unsigned int i = 0; i < memory_bitmap_size * 32; i++)
+    {
+        if (is_used(i))
+        {
+            count++;
+        }
+    }   
+    return count;
+}
+
+void print_memory_map(){
+
+    int current = is_used(0);
+    int temp = current;
+    printf("[ %s %d-",!current?"free:":"occupied:",0);
+    for(int i = 0; i < 32 * sizeof(memory_bitmap) / sizeof(memory_bitmap[0]);i++){
+        current = is_used(i);
+        if(temp != current){
+            printf("%d,  ",i);
+            printf("%s %d-",!current?"free:":"occupied:",i);
+            temp = current;
+        }
+    }
+    printf("%d ]",32 * sizeof(memory_bitmap) / sizeof(memory_bitmap[0]));
+    printf("\n\nfree frames: %d  occupied frames: %d",get_free_frames_count(),get_occupied_frames_count());
+}

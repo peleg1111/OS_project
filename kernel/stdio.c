@@ -18,12 +18,6 @@ void clean_command_history();
     .text_offset = 0
 };
 
-const char* error_messages[]  = {
-    "Success",
-    "Buffer overflow",
-    "Invalid command",
-    "Unknown error"
-};
 
 void update_screen()
 {
@@ -75,8 +69,6 @@ void set_color(int new_color){
 void header_msg(){
 
     printf("\n\n%s", print_info.driver_name);
-    update_cursor();
-    update_screen();
     print_info.last_header_pos = print_info.cursor_pos;
 }
 
@@ -120,7 +112,7 @@ void printf (char* message, ...) {
             if(message[i] == 's'){
                 // הקוד המתוקן והנכון ארכיטקטונית
                 char* c = va_arg(args, char*);
-                for (int index = 0 ; c[index] != null && print_info.last_pos < MAX_ROWS * SCREEN_COLS; index++){
+                for (int index = 0 ; c[index] != null && print_info.last_pos < 2* MAX_ROWS * SCREEN_COLS; index++){
                     print_char(c[index]);   
                 }
             }
@@ -151,6 +143,10 @@ void printf (char* message, ...) {
                 float num = (float)va_arg(args,double);
                 print_float(num,f_num);
                 }
+            }
+            else{
+                i--;
+                print_char(message[i]);
             }
         }
 
@@ -371,8 +367,14 @@ int strcmp(unsigned char* s1, char* s2) {
     return (s1[i] == s2[i]) ? 1 : 0;
 }
 unsigned int intStr_to_int(char* str) {
+    if (str == null) return 0;
     unsigned int result = 0;
     int i = 0;
+    int is_negative = 1;
+    if(str[0] == '-'){
+        str++;
+        is_negative = -1;
+    }
     while (str[i] != '\0') {
         
         if (str[i] < '0' || str[i] > '9') {
@@ -381,7 +383,7 @@ unsigned int intStr_to_int(char* str) {
         result = result * 10 + (str[i] - '0');
         i++;
     }
-    return result;
+    return result * is_negative;
 }
 
 // קבלת קלט מהמחשב

@@ -98,7 +98,7 @@ void page_fault_handler(registers_t *regs)
 
     int present = !(regs->err_code & 0x1); // דף לא ממופה <- 0
     int write = regs->err_code & 0x2;      // 1 -> ניסיון כתיבה
-    int user = regs->err_code & 0x4;       // 1 -> User Mode (Ring 3)
+    int user = regs->cs == 0x08;// 1 -> User Mode (Ring 3)
     int reserved = regs->err_code & 0x8;   // 1 -> דריסת ביטים שמורים
     int fetch = regs->err_code & 0x10;     // 1 -> ניסיון להריץ קוד
 

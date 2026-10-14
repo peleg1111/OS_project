@@ -333,7 +333,7 @@ Thread* get_thread_by_id(unsigned int id){
 
 int kill_thread(Thread* th){
     if(th == null) return 0;
-    if(th->id == 0) return 0; // לא ניתן להרוג את התהליך הראשי של הקרנל
+    if(th->id == 0 || th->id == 1) return 0; // לא ניתן להרוג את התהליך הראשי של הקרנל
     
     set_thread_state(th, ZOMBIE);
     return 1;

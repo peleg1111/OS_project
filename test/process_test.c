@@ -8,9 +8,8 @@
 void _test_process_free_helper()
 {
 
-    for (int i = 0; i < 40; i++)
+    for (int i = 0; i < 10; i++)
     {
-        time.sleep(0.01);
         int* x = malloc(1030 * 4);
         for(int i = 0; i< 10; i+=400){
             x[i] = i;
@@ -60,14 +59,36 @@ void test_process_free()
         yield;
     }
     free(t);
-
+    clear_screen();
+    time.sleep(1);
+    header_msg();
+    printf("\n\n\t\t=== test_process_free ===\n");
     printf("\n\t free frames before test = %d  free frames after test = %d", size, get_free_frames_count());
     printf("\n\t heap size before test = %d  heap size after test = %d", heap_start_size, calc_heap_size(kernel_heap_start_block));
+    header_msg();
 }
 
 
 void test_process_running_process(){
+    unsigned int heap_start_size = calc_heap_size(kernel_heap_start_block);
+    int size = get_free_frames_count();
+
+
     Thread* t = create_processe(test_process_free);
     start_thread(t);
     join_thread(t);
+    for (int i = 0; i < 100; i++)//ממתין לשיחרור הזיכרון
+    {
+        yield;
+    }
+
+    free(t);
+    clear_screen();
+    time.sleep(1);
+    header_msg();
+    printf("\n\n");
+    printf("\t\t=== test_process_running_process ===\n");
+    printf("\n\t free frames before test = %d  free frames after test = %d", size, get_free_frames_count());
+    printf("\n\t heap size before test = %d  heap size after test = %d", heap_start_size, calc_heap_size(kernel_heap_start_block));
+    header_msg();
 }

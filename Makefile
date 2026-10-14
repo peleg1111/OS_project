@@ -39,6 +39,9 @@ OBJ = $(BIN_DIR)/kernel.o \
 	  $(BIN_DIR)/gdt.o \
 	  $(BIN_DIR)/random.o \
 	  $(BIN_DIR)/process_test.o \
+	  $(BIN_DIR)/memory_test.o \
+	  $(BIN_DIR)/exception_test.o \
+
 
 
 
@@ -133,6 +136,12 @@ $(BIN_DIR)/gdt.o: cpu/gdt/gdt.asm
 	$(ASM) -f elf32 $< -o $@
 
 $(BIN_DIR)/process_test.o: test/process_test.c
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BIN_DIR)/memory_test.o: test/memory_test.c
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BIN_DIR)/exception_test.o: test/exception_test.c
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
