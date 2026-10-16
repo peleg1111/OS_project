@@ -17,12 +17,12 @@ void main()
 
     set_up_kernel();
 
-    //start_thread(create_processe(test_process_running_process));  
 
     while(1){
         __asm__ __volatile__("hlt");
     }
 }
+
 
 //  מאפס את ההגדרות של הקרנל ומכין אותו לשימוש  
 void set_up_kernel() {

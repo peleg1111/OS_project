@@ -127,7 +127,7 @@ Thread* _create_processe(void(* entery_point)(), ...){
 
 
 
-void free_processe(Process* p){
+void free_process(Process* p){
     
     if(p == null) return;
 
@@ -210,7 +210,7 @@ void kill_processe_idle(){
     Process* p;
 
     while(1){
-        if(!processe_q) continue;
+        while(!processe_q) yield;
 
         current = processe_q->end_node;
         while(current != null){
@@ -218,7 +218,7 @@ void kill_processe_idle(){
             p = (Process*)current->val;
             if(p != null && p->state == DEAD && p != kernel_processe){
 
-                free_processe(p);
+                free_process(p);
             }
 
             current = next;
@@ -251,6 +251,7 @@ Process* get_process_by_id(long id){
         }
         current = current->next;
     }
+
     return null;
 }
 

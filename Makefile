@@ -41,6 +41,7 @@ OBJ = $(BIN_DIR)/kernel.o \
 	  $(BIN_DIR)/process_test.o \
 	  $(BIN_DIR)/memory_test.o \
 	  $(BIN_DIR)/exception_test.o \
+	  $(BIN_DIR)/List.o \
 
 
 
@@ -124,6 +125,9 @@ $(BIN_DIR)/Queue.o: lib/Queue.c
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BIN_DIR)/Stack.o: lib/Stack.c
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BIN_DIR)/List.o: lib/List.c
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BIN_DIR)/random.o: lib/random.c

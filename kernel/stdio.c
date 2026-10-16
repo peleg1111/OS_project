@@ -2,6 +2,7 @@
 #include "key_board.h"
 #include "timer.h"
 #include "thread.h"
+#include "List.h"
 
 void clean_command_history();
 
@@ -505,4 +506,110 @@ int abs(int x , int y){
         return -x;
     }
     return x;
+}
+
+
+
+Shell_window *create_shell_window(Shell_state state);
+unsigned int window_id_counter = 0;
+List *windows;
+Shell_window *current_window;
+
+void init_shell()
+{
+    windows = _create_list(1);
+    Shell_window *w = create_shell_window(Kernel_shell);
+    if (w == null) return;
+    k_append_list(windows, w);
+}
+
+Shell_window *create_shell_window(Shell_state state){
+
+    Shell_window *shell_window = malloc(sizeof(Shell_window));
+    if (shell_window == null) return null;
+
+    shell_window->video = kmalloc(MAX_ROWS * SCREEN_COLS);
+    if (shell_window->video == null){
+
+        free(shell_window);
+        return null;
+    }
+
+    shell_window->terminal_buffer = kmalloc(MAX_ROWS * SCREEN_COLS);
+    if (shell_window->terminal_buffer == null){
+        free(shell_window->video);
+        free(shell_window);
+        return null;  
+    }
+
+    shell_window->id = window_id_counter++;
+    shell_window->cursor_pos = 0;
+    shell_window->cur_color = WHITE_ON_BLACK;
+    shell_window->driver_name[0] = null;
+    shell_window->last_pos = 0;
+    shell_window->current_view_row = 0;
+    shell_window->last_header_pos = 0;
+    shell_window->buffer_row_offset = 0;
+    shell_window->text_offset = 0;
+    shell_window->state = state;
+
+    for (int i = 0; i < MAX_ROWS * SCREEN_COLS; i++){
+        shell_window->terminal_buffer[i] = ' ' | (unsigned short)(WHITE_ON_BLACK << 8);
+    }
+
+    return shell_window;
+}
+
+void change_window(unsigned int id)
+{
+    if (windows == null) return;
+    Node *node = windows->head;
+    Shell_window *window;
+    while (node != null){
+        window = (Shell_window *)node->data;
+        if (window == null) return;
+
+        if (window->id == id){
+            current_window = window;
+            //update_screen();
+            return;
+        }
+        node = node->next;
+    }
+}
+
+void free_window(Shell_window *window)
+{
+    if (window == null) return;
+    free(window->video);
+    free(window->terminal_buffer);
+    free(window);
+}
+
+void remove_shell_window(unsigned int id)
+{
+    if (windows == null) return;
+
+    Node *node = windows->head;
+    Shell_window *window;
+    int i = 0;
+    while (node != null){
+        window = (Shell_window *)node->data;
+        if (window == null)  return;
+        if (window->id == id)
+        {
+            //יש לשנות חלון אם החלון הנמחק הוא החלון הנוכחי
+            free_window(window);
+            pop_list(windows, i);
+            return;       
+        }
+        i++;
+        node = node->next;
+    }
+}
+
+int get_current_window_id()
+{
+    if (current_window == null) return -1;
+    return current_window->id;
 }

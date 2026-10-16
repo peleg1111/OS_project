@@ -112,7 +112,31 @@ typedef struct {
 extern Print_info print_info;
 
 
-extern const char* error_messages[];
+
+typedef enum
+{
+    Kernel_shell = 0, // הקרנל מנהל את המסך
+    User_shell = 1, // המשתמש מנהל את המסך
+    Writing_shell = 2 // בשביל כתיבה לקבצים
+
+} Shell_state;
+
+typedef struct
+{
+    unsigned int id;
+    int cursor_pos;
+    volatile unsigned short *video;
+    int cur_color;
+    char driver_name[20];
+    int last_pos;
+    int current_view_row; // השורה שאותה אנחנו רואים כרגע בראש המסך
+    int last_header_pos;
+    unsigned short *terminal_buffer; // חוצץ ששומר את כל הטקסט (תו + צבע)
+    unsigned short buffer_row_offset;
+    int text_offset;
+    Shell_state state;
+
+} Shell_window;
 
 #define yield __asm__ __volatile__("int $0x81")
 #define uint32 unsigned int

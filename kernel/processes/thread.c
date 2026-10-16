@@ -14,7 +14,6 @@ unsigned int next_id = 0;
 
 Thread_list* th_list = null;
 
-
 unsigned int* put_args_in_stack(void* top_stack, va_list args ){
 
     int count = 0;
@@ -125,14 +124,12 @@ Thread *create_thread_for_processe(thread_entry_t entry_point, Process* p , va_l
     else
     {
         asm volatile("cli");
-    
-        new_node->next = th_list->next;
 
-        new_node->prev = th_list;
+        new_node->next = th_list;
+        new_node->prev = th_list->prev;
 
-        th_list->next->prev = new_node;
-
-        th_list->next = new_node;
+        th_list->prev->next = new_node;
+        th_list->prev = new_node;
 
         thread->process = p;
         if (thread->process != null)

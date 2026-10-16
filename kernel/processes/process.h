@@ -46,7 +46,7 @@ int kill_process(Process* p);
 Process* get_process_by_id(long id);
 void kill_processe_idle();
 int kill_process(Process* p);
-void free_processe(Process* p);
+void free_process(Process* p);
 void print_process_info(Process* p);
 void print_all_processes_info();
 #endif

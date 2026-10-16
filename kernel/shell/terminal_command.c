@@ -3,6 +3,7 @@
 #include "key_board.h"
 #include "memory_test.h"
 #include "exception_test.h"
+#include "process_test.h"
 
 void update_screen();
 void set_color(int color);
@@ -82,6 +83,7 @@ void handle_command() {
             "\n  mod <num1> <num2>         - return => num1 % num2"
             "\n  div <num1> <num2>         - return => num1 / num2"
             "\n  mult <num1> <num2>        - return => num1 * num2"
+            "\n  test_thread               - test the process & thread system"
             "\n  test_memory               - test the memory manager"
             "\n  memory_map                - print ranges of free and occupied memory address"
             "\n  trigger_invalid_opcode    - trigger an error"
@@ -104,7 +106,7 @@ void handle_command() {
             "\n  LEFT / RIGHT          - Move cursor back and forth."
             "\n  Shift + UP / DOWN     - Scroll up / down through buffer."
             "\n  Shift + LEFT / RIGHT  - Select / highlight text."
-            "\n  Ctrl + A              - Select all text on current row." 
+            "\n  Ctrl + A              - Select all text on current row."
             "\n  Ctrl + C              - Copy selected text."
             "\n  Ctrl + V              - Paste copied text."
             "\n================================================================="
@@ -168,6 +170,12 @@ void handle_command() {
     else if(strcmp(parts[0],"test_memory")){
         run_memory_tests();
     }
+
+    else if (strcmp(parts[0], "test_thread"))
+    {
+        run_thread_process_tests();
+    }
+
     else if(strcmp(parts[0],"trigger_page_fault")){
         trigger_page_fault();
     }
